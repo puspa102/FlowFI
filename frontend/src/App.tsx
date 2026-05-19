@@ -1,121 +1,181 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState, type FormEvent } from 'react'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    rememberMe: false,
+  })
+  const [statusMessage, setStatusMessage] = useState('')
+  const [statusType, setStatusType] = useState<'idle' | 'success' | 'error'>('idle')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
+
+  const updateField = (
+    field: keyof typeof formData,
+    value: string | boolean,
+  ) => {
+    setFormData((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setStatusMessage('')
+    setStatusType('idle')
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string
+        token?: string
+        error?: string
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? 'Login failed.')
+      }
+
+      if (payload.token) {
+        if (formData.rememberMe) {
+          localStorage.setItem('flofi_auth_token', payload.token)
+        } else {
+          sessionStorage.setItem('flofi_auth_token', payload.token)
+        }
+      }
+
+      setStatusType('success')
+      setStatusMessage(payload.message ?? 'Login successful.')
+      setFormData({
+        email: '',
+        password: '',
+        rememberMe: false,
+      })
+    } catch (error) {
+      setStatusType('error')
+      setStatusMessage(error instanceof Error ? error.message : 'Login failed.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
+    <main className="auth-shell">
+      <section className="auth-hero" aria-label="Brand showcase">
+        <div className="brand-badge">FloFi</div>
+        <div className="hero-copy">
+          <h1>Precision Wealth Engineering.</h1>
           <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+            Advanced AI-driven insights for the next generation of financial mastery.
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="hero-dots" aria-hidden="true">
+          <span className="is-active" />
+          <span />
+          <span />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+
+        <div className="hero-wave" aria-hidden="true">
+          <span className="wave wave-one" />
+          <span className="wave wave-two" />
+          <span className="wave wave-three" />
+          <span className="wave wave-four" />
+          <span className="wave wave-five" />
+          <span className="wave wave-six" />
+          <span className="wave wave-seven" />
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <section className="auth-panel" aria-label="Login form">
+        <div className="panel-header">
+          <h2>Welcome Back</h2>
+          <p className="panel-copy">Access your FloFi Pro dashboard</p>
+        </div>
+
+        <form className="registration-form login-form" onSubmit={handleSubmit}>
+          <label>
+            <span>Email Address</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={(event) => updateField('email', event.target.value)}
+              required
+            />
+          </label>
+
+          <label>
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={(event) => updateField('password', event.target.value)}
+              required
+            />
+          </label>
+
+          <div className="login-meta">
+            <label className="remember-row">
+              <input
+                type="checkbox"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={(event) => updateField('rememberMe', event.target.checked)}
+              />
+              <span>Remember me</span>
+            </label>
+
+            <a href="#">Forgot password?</a>
+          </div>
+
+          <button type="submit" className="primary-button" disabled={isSubmitting}>
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
+          </button>
+
+          {statusMessage ? (
+            <p className={`status-message status-${statusType}`}>{statusMessage}</p>
+          ) : null}
+
+          <div className="divider divider-text" role="presentation">
+            <span>OR CONTINUE WITH</span>
+          </div>
+
+          <div className="auth-actions compact-actions" aria-label="Social login options">
+            <button type="button" className="social-button">
+              Google
+            </button>
+            <button type="button" className="social-button">
+              Apple
+            </button>
+          </div>
+
+          <p className="footer-copy">
+            Don&apos;t have an account? <a href="#">Sign up</a>
+          </p>
+        </form>
+      </section>
+    </main>
   )
 }
 
