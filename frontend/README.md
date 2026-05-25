@@ -71,3 +71,15 @@ export default defineConfig([
   },
 ])
 ```
+
+## API integration
+
+- Backend base URL defaults to `http://localhost:3001`.
+- Override it with `VITE_API_BASE_URL` in a `.env` file.
+
+### Login flow
+
+1. Start the backend (`npm run dev` in the backend folder).
+2. Register a user via `POST /register` (email/password).
+3. Visit `/login` in the frontend and sign in.
+4. The JWT is stored in localStorage under `flofi_token` and used for API calls.
