@@ -1,170 +1,71 @@
-import './Home.css'
-
-const trustedLogos = ['Velocity', 'Cryptos', 'Quantum', 'Nexus']
-
-const featureCards = [
-  {
-    title: 'AI Insights',
-    copy:
-      'Predictive modeling that identifies market trends and tax optimization opportunities before they arise.',
-    tag: 'Trend Signals',
-  },
-  {
-    title: 'OCR Scanning',
-    copy:
-      'Instant document ingestion. Snap a photo of a statement or receipt and let our AI categorize every cent.',
-    tag: 'Smart Capture',
-  },
-  {
-    title: 'Smart Budgets',
-    copy:
-      'Adaptive envelopes that learn your lifestyle and adjust goals dynamically to ensure you stay on track.',
-    tag: 'Auto-Adjust',
-  },
-  {
-    title: 'Wealth Engineering',
-    copy:
-      'Consolidate disparate assets from crypto to real estate into a unified source of truth.',
-    tag: 'Unified View',
-  },
-]
+import { useEffect } from 'react'
+import Navbar from '@/components/landing/Navbar'
+import HeroSection from '@/components/landing/HeroSection'
+import TrustedSection from '@/components/landing/TrustedSection'
+import FeaturesSection from '@/components/landing/FeaturesSection'
+import DashboardShowcase from '@/components/landing/DashboardShowcase'
+import AISection from '@/components/landing/AISection'
+import WhySection from '@/components/landing/WhySection'
+import TestimonialsSection from '@/components/landing/TestimonialsSection'
+import PricingSection from '@/components/landing/PricingSection'
+import SecuritySection from '@/components/landing/SecuritySection'
+import CTASection from '@/components/landing/CTASection'
+import Footer from '@/components/landing/Footer'
 
 export default function Home() {
+  // Update document meta
+  useEffect(() => {
+    document.title = 'Flofi — AI-Powered Personal Finance Management'
+    const meta = document.querySelector('meta[name="description"]')
+    if (meta) {
+      meta.setAttribute(
+        'content',
+        'Track expenses, manage budgets, monitor accounts, and receive AI-powered financial insights — all in one intelligent platform. Free to start.'
+      )
+    }
+  }, [])
+
   return (
-    <div className="home-shell">
-      <header className="home-header">
-        <div className="brand">
-          <span className="brand-mark">FloFi</span>
-          <span className="brand-dot" aria-hidden="true" />
-        </div>
-        <nav className="home-nav" aria-label="Primary">
-          <a href="#platform">Platform</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#insights">AI Insights</a>
-          <a href="#pricing">Pricing</a>
-        </nav>
-        <div className="home-actions">
-          <button className="ghost-button" type="button">
-            Log in
-          </button>
-          <button className="primary-button" type="button">
-            Get Started
-          </button>
-        </div>
-      </header>
+    <div className="relative min-h-screen bg-[#030912] text-white antialiased">
+      {/* SEO: single h1 is in HeroSection */}
+
+      {/* Sticky Navbar */}
+      <Navbar />
 
       <main>
-        <section className="hero" id="platform">
-          <div className="hero-copy">
-            <span className="hero-pill">New powered by GPT-4o</span>
-            <h1>
-              Precision Wealth <span>Engineering</span>
-            </h1>
-            <p>
-              AI-powered financial insights for the next generation of wealth. Professional-grade analytics
-              delivered through a seamless, glass-morphic interface.
-            </p>
-            <div className="hero-cta">
-              <button className="primary-button" type="button">
-                Get Started Free
-              </button>
-              <button className="ghost-button" type="button">
-                Watch Demo
-              </button>
-            </div>
-          </div>
+        {/* 1 — Hero */}
+        <HeroSection />
 
-          <div className="hero-visual" aria-hidden="true">
-            <div className="glass-frame">
-              <div className="device-grid">
-                <div className="device-card">
-                  <div className="device-chip" />
-                  <div className="device-line" />
-                  <div className="device-ring" />
-                </div>
-                <div className="device-card is-center">
-                  <div className="device-chip" />
-                  <div className="device-chart" />
-                  <div className="device-line" />
-                </div>
-                <div className="device-card">
-                  <div className="device-chip" />
-                  <div className="device-line" />
-                  <div className="device-ring" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 2 — Trusted By / Stats */}
+        <TrustedSection />
 
-        <section className="trusted" aria-label="Trusted by">
-          <p>Trusted by modern institutions</p>
-          <div className="trusted-logos">
-            {trustedLogos.map((logo) => (
-              <span key={logo}>{logo}</span>
-            ))}
-          </div>
-        </section>
+        {/* 3 — Core Features */}
+        <FeaturesSection />
 
-        <section className="features" id="solutions">
-          <div className="section-header">
-            <h2>Engineered for Performance</h2>
-            <p>Advanced tools designed to simplify complex wealth management into actionable clarity.</p>
-          </div>
+        {/* 4 — Dashboard Showcase */}
+        <DashboardShowcase />
 
-          <div className="feature-grid">
-            {featureCards.map((card) => (
-              <article key={card.title} className="feature-card" id="insights">
-                <div className="card-top">
-                  <span className="card-pill">{card.tag}</span>
-                  <h3>{card.title}</h3>
-                </div>
-                <p>{card.copy}</p>
-                <div className="card-footer">
-                  <div className="card-metric">
-                    <span>+21%</span>
-                    <small>YoY accuracy</small>
-                  </div>
-                  <div className="card-metric">
-                    <span>$1.2M</span>
-                    <small>Managed value</small>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        {/* 5 — AI Assistant */}
+        <AISection />
 
-        <section className="cta" id="pricing">
-          <div className="cta-inner">
-            <div>
-              <h2>Ready to upgrade your financial IQ?</h2>
-              <p>Join 50,000+ investors who use FloFi to navigate the future of wealth.</p>
-            </div>
-            <div className="cta-actions">
-              <button className="primary-button" type="button">
-                Start Your Free Trial
-              </button>
-              <button className="ghost-button" type="button">
-                Contact Sales
-              </button>
-            </div>
-          </div>
-        </section>
+        {/* 6 — Why Flofi */}
+        <WhySection />
+
+        {/* 7 — Testimonials */}
+        <TestimonialsSection />
+
+        {/* 8 — Pricing */}
+        <PricingSection />
+
+        {/* 9 — Security */}
+        <SecuritySection />
+
+        {/* 10 — CTA */}
+        <CTASection />
       </main>
 
-      <footer className="home-footer">
-        <div>
-          <span className="brand-mark">FloFi</span>
-          <p>Precision Wealth Engineering</p>
-        </div>
-        <div className="footer-links">
-          <a href="/privacy-policy">Privacy Policy</a>
-          <a href="/terms-of-service">Terms of Service</a>
-          <a href="#">Security</a>
-          <a href="#">Contact</a>
-        </div>
-      </footer>
+      {/* 11 — Footer */}
+      <Footer />
     </div>
   )
 }
