@@ -13,6 +13,12 @@ import insightsRouter from './routes/insights'
 import categoriesRouter from './routes/categories'
 import pricingRouter from './routes/pricing'
 import budgetsRouter from './routes/budgets'
+import investmentsRouter from './routes/investments'
+import subscriptionsRouter from './routes/subscriptions'
+import bankConnectionsRouter from './routes/bankConnections'
+import aiCoachRouter from './routes/aiCoach'
+import savingsGoalsRouter from './routes/savingsGoals'
+import familyRouter from './routes/family'
 import requireAuth from './middleware/requireAuth'
 import notFound from './middleware/notFound'
 import errorHandler from './middleware/errorHandler'
@@ -59,6 +65,12 @@ app.use('/api/insights', requireAuth, insightsRouter)
 app.use('/api/categories', requireAuth, categoriesRouter)
 app.use('/api/pricing', requireAuth, pricingRouter)
 app.use('/api/budgets', requireAuth, budgetsRouter)
+app.use('/api/investments', requireAuth, investmentsRouter)
+app.use('/api/subscriptions', requireAuth, subscriptionsRouter)
+app.use('/api/bank-connections', requireAuth, bankConnectionsRouter)
+app.use('/api/ai-coach', requireAuth, aiCoachRouter)
+app.use('/api/savings-goals', requireAuth, savingsGoalsRouter)
+app.use('/api/family', requireAuth, familyRouter)
 
 app.use(notFound)
 app.use(errorHandler)

@@ -36,6 +36,12 @@ model User {
   goals           Goal[]
   budgetSuggestions BudgetSuggestion[]
   savingsStreaks    SavingsStreak[]
+  investments   Investment[]
+  subscriptions Subscription[]
+  bankConnections BankConnection[]
+  anomalyAlerts AnomalyAlert[]
+  expensePredictions ExpensePrediction[]
+  familyMembers FamilyMember[]
 }
 
 model Account {
@@ -211,10 +217,129 @@ model Goal {
   user               User     @relation(fields: [userId], references: [id])
 }
 
+model Investment {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  symbol           String
+  name             String
+  type             InvestmentType
+  quantity         Decimal       @db.Decimal(20, 8)
+  purchasePrice    Decimal       @db.Decimal(14, 2)
+  currentPrice     Decimal       @db.Decimal(14, 2)
+  allocation       Int
+  lastUpdated      DateTime      @default(now())
+  createdAt        DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+}
+
+model Subscription {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  name             String
+  status           SubscriptionStatus
+  monthlyPrice     Decimal       @db.Decimal(10, 2)
+  billingDate      DateTime
+  category         String
+  lastActivity     DateTime?
+  createdAt        DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+}
+
+model BankConnection {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  accountName      String
+  accountType      String
+  balance          Decimal       @db.Decimal(14, 2)
+  maskedAccountNumber String
+  lastSynced       DateTime
+  syncStatus       SyncStatus
+  createdAt        DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+}
+
+model AnomalyAlert {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  title            String
+  description      String
+  severity         String
+  category         String
+  detectedAmount   Decimal       @db.Decimal(14, 2)
+  averageAmount    Decimal       @db.Decimal(14, 2)
+  createdAt        DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+}
+
+model ExpensePrediction {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  month            DateTime
+  predictedAmount  Decimal       @db.Decimal(14, 2)
+  confidence       Int
+  category         String
+  createdAt        DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+}
+
+model FamilyMember {
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  familyId         Int
+  name             String
+  email            String?
+  role             String
+  joinedAt         DateTime      @default(now())
+  user             User          @relation(fields: [userId], references: [id])
+  family           FamilyGroup   @relation(fields: [familyId], references: [id])
+}
+
+model FamilyGroup {
+  id               Int           @id @default(autoincrement())
+  name             String
+  createdBy        Int
+  createdAt        DateTime      @default(now())
+  members          FamilyMember[]
+  budgets          FamilyBudget[]
+}
+
+model FamilyBudget {
+  id               Int           @id @default(autoincrement())
+  familyId         Int
+  category         String
+  month            DateTime
+  budgetAmount     Decimal       @db.Decimal(14, 2)
+  spentAmount      Decimal       @db.Decimal(14, 2)
+  percentUsed      Int
+  createdAt        DateTime      @default(now())
+  family           FamilyGroup   @relation(fields: [familyId], references: [id])
+}
+
 enum BudgetStatus {
   ON_TRACK
   WARNING
   HEALTHY
+}
+
+enum InvestmentType {
+  STOCK
+  ETF
+  CRYPTO
+  BOND
+  MUTUAL_FUND
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum SyncStatus {
+  SYNCED
+  SYNCING
+  FAILED
 }
 
 
