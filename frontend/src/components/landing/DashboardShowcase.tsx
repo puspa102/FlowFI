@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { BarChart2, TrendingUp, Wallet, Brain, CheckCircle2, ArrowRight } from 'lucide-react'
+import type { JSX } from 'react'
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: BarChart2 },

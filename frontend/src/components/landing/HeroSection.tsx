@@ -1,54 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useAnimation } from 'framer-motion'
-import { ArrowRight, Play, TrendingUp, Wallet, Brain, ShieldCheck } from 'lucide-react'
-
-// Mini Dashboard Card
-function DashMiniCard({
-  label,
-  value,
-  change,
-  positive = true,
-  delay = 0,
-}: {
-  label: string
-  value: string
-  change: string
-  positive?: boolean
-  delay?: number
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-dark rounded-2xl p-4 min-w-[140px]"
-    >
-      <p className="text-xs text-white/50 font-medium uppercase tracking-wider mb-2">{label}</p>
-      <p className="text-xl font-bold text-white">{value}</p>
-      <p className={`text-xs font-medium mt-1 ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
-        {change}
-      </p>
-    </motion.div>
-  )
-}
-
-// Floating AI insight card
-function AiInsightCard({ text, delay }: { text: string; delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 30, scale: 0.9 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ delay, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="glass-navy rounded-2xl px-4 py-3 flex items-start gap-3 max-w-[260px]"
-    >
-      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 border border-cyan-500/30">
-        <Brain className="h-3 w-3 text-cyan-400" />
-      </div>
-      <p className="text-xs text-white/80 leading-relaxed">{text}</p>
-    </motion.div>
-  )
-}
+import { ArrowRight, Play, TrendingUp, Wallet, ShieldCheck } from 'lucide-react'
 
 // Animated bar chart
 function SpendingChart() {
@@ -79,7 +32,7 @@ function SpendingChart() {
               <motion.div
                 initial={{ height: 0 }}
                 animate={{ height: animated ? `${bar.height}%` : '0%' }}
-                transition={{ delay: 0.9 + i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ delay: 0.9 + i * 0.08, duration: 0.6, ease: 'easeInOut' }}
                 className="w-full rounded-t-md"
                 style={{ background: bar.color, opacity: 0.85 }}
               />
@@ -89,6 +42,23 @@ function SpendingChart() {
         ))}
       </div>
     </div>
+  )
+}
+
+// Floating AI insight card
+function AiInsightCard({ text, delay }: { text: string; delay: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 30, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ delay, duration: 0.7, ease: 'easeInOut' }}
+      className="glass-navy rounded-2xl px-4 py-3 flex items-start gap-3 max-w-[260px]"
+    >
+      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/20 border border-cyan-500/30">
+        <span className="text-lg">💡</span>
+      </div>
+      <p className="text-xs text-white/80 leading-relaxed">{text}</p>
+    </motion.div>
   )
 }
 
@@ -110,7 +80,7 @@ function BudgetProgress({ label, spent, total, color }: { label: string; spent: 
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: animated ? `${pct}%` : '0%' }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.9 }}
           className="h-full rounded-full"
           style={{ background: color }}
         />
@@ -133,7 +103,7 @@ export default function HeroSection() {
   }
   const item = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
   }
 
   return (
@@ -222,7 +192,7 @@ export default function HeroSection() {
           <motion.div
             initial={{ opacity: 0, x: 50, scale: 0.95 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ delay: 0.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.4, duration: 0.9 }}
             className="relative lg:flex hidden"
           >
             {/* Main dashboard card */}
