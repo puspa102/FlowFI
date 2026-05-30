@@ -8,6 +8,11 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Settings from './pages/Settings'
 import AIAssistant from './pages/AIAssistant'
+import Investments from './pages/Investments'
+import Family from './pages/Family'
+import Subscriptions from './pages/Subscriptions'
+import BankAccounts from './pages/BankAccounts'
+import SavingsGoals from './pages/SavingsGoals'
 
 function App() {
   return (
@@ -22,6 +27,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/ai-assistant" element={<AIAssistant />} />
+        <Route path="/investments" element={<Investments />} />
+        <Route path="/family" element={<Family />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/bank-accounts" element={<BankAccounts />} />
+        <Route path="/savings-goals" element={<SavingsGoals />} />
       </Routes>
     </BrowserRouter>
   )

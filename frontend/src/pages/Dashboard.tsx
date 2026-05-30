@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { apiGet, getAuthToken } from '../api/client'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 
 type CashFlowItem = {
   month: string
@@ -188,62 +188,22 @@ export default function Dashboard() {
   }, [cashFlowList])
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-slate-900 font-sans">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        
-        {/* Sidebar Navigation */}
-        <aside className="flex flex-col gap-6 bg-slate-950 px-6 py-8 text-white">
-          <div>
-            <div className="text-lg font-semibold">FloFi Pro</div>
-            <span className="text-xs uppercase tracking-[0.25em] text-slate-400">AI Wealth Management</span>
+    <DashboardLayout>
+      <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500">Analytics Hub</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Precision Wealth Engineering</h1>
+          <p className="max-w-2xl text-sm text-slate-500">
+            Welcome back. Your cash flow engine is running at a <strong className="text-emerald-600">{activeAna.savingsRate}% savings rate</strong> this month.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-500 shadow-2xs">
+            AI Wealth Active
           </div>
-          <nav className="space-y-2 text-sm text-slate-300">
-            <Link className="block rounded-full bg-white/10 px-4 py-2 text-white" to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/transactions">
-              Transactions
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/ai-assistant">
-              AI Assistant
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/budgets">
-              Portfolio
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/settings">
-              Settings
-            </Link>
-          </nav>
-          <Button variant="secondary" className="mt-auto w-full rounded-full bg-white/10 text-white hover:bg-white/20">
-            Upgrade to Plus
-          </Button>
-          <div className="text-xs text-slate-400">
-            <a className="block hover:text-white transition" href="#support">
-              Support
-            </a>
-            <button onClick={() => { localStorage.removeItem('flofi_token'); navigate('/login') }} className="block text-left hover:text-white transition">
-              Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* Workspace */}
-        <main className="space-y-8 px-6 py-10 lg:px-10">
-          <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-indigo-500">Analytics Hub</p>
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Precision Wealth Engineering</h1>
-              <p className="max-w-2xl text-sm text-slate-500">
-                Welcome back. Your cash flow engine is running at a <strong className="text-emerald-600">{activeAna.savingsRate}% savings rate</strong> this month.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-500 shadow-2xs">
-                AI Wealth Active
-              </div>
-              <div className="h-10 w-10 rounded-full bg-linear-to-br from-indigo-600 to-indigo-400 shadow-md" />
-            </div>
-          </header>
+          <div className="h-10 w-10 rounded-full bg-linear-to-br from-indigo-600 to-indigo-400 shadow-md" />
+        </div>
+      </header>
 
           {authRequired && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 text-sm text-amber-800">
@@ -474,9 +434,7 @@ export default function Dashboard() {
             </Card>
           </section>
 
-          <footer className="text-xs text-slate-400 pt-6">FloFi • Precision Wealth Engineering</footer>
-        </main>
-      </div>
-    </div>
+      <footer className="text-xs text-slate-400 pt-6">FloFi • Precision Wealth Engineering</footer>
+    </DashboardLayout>
   )
 }

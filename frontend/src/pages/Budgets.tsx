@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { apiGet, apiPost, apiDelete, getAuthToken } from '../api/client'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 
 type BudgetItem = {
   id: number
@@ -90,7 +90,6 @@ function formatCurrency(value: number) {
 }
 
 export default function Budgets() {
-  const navigate = useNavigate()
   const [summary, setSummary] = useState<BudgetSummary | null>(null)
   const [categories, setCategories] = useState<CategoryItem[]>([])
   const [authRequired, setAuthRequired] = useState(false)
@@ -192,48 +191,8 @@ export default function Budgets() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-slate-900 font-sans">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        
-        {/* Sidebar */}
-        <aside className="flex flex-col gap-6 bg-slate-950 px-6 py-8 text-white">
-          <div>
-            <div className="text-lg font-semibold">FloFi Pro</div>
-            <span className="text-xs uppercase tracking-[0.25em] text-slate-400">AI Wealth Management</span>
-          </div>
-          <nav className="space-y-2 text-sm text-slate-300">
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/dashboard">
-              Dashboard
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/transactions">
-              Transactions
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/ai-assistant">
-              AI Assistant
-            </Link>
-            <Link className="block rounded-full bg-white/10 px-4 py-2 text-white" to="/budgets">
-              Portfolio
-            </Link>
-            <Link className="block rounded-full px-4 py-2 transition hover:bg-white/10" to="/settings">
-              Settings
-            </Link>
-          </nav>
-          <Button variant="secondary" className="mt-auto w-full rounded-full bg-white/10 text-white hover:bg-white/20">
-            Upgrade to Plus
-          </Button>
-          <div className="text-xs text-slate-400">
-            <a className="block hover:text-white transition" href="#support">
-              Support
-            </a>
-            <button onClick={() => { localStorage.removeItem('flofi_token'); navigate('/login') }} className="block text-left hover:text-white transition">
-              Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* Workspace */}
-        <main className="space-y-8 px-6 py-10 lg:px-10">
-          <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <DashboardLayout>
+      <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Wealth Strategy</p>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">Budgets & Long-term Goals</h1>
@@ -374,8 +333,6 @@ export default function Budgets() {
           </section>
 
           <footer className="text-xs text-slate-400 pt-6">FloFi • Precision Wealth Engineering</footer>
-        </main>
-      </div>
 
       {/* Set Budget Modal */}
       {isModalOpen && (
@@ -443,6 +400,6 @@ export default function Budgets() {
           </div>
         </div>
       )}
-    </div>
+    </DashboardLayout>
   )
 }
