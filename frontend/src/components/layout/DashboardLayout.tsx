@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import Sidebar from './Sidebar'
+import PageWrapper from '@/components/ui/PageWrapper'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -7,11 +8,11 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-slate-900 font-sans">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
+    <div className="min-h-screen font-sans bg-navy-950 text-white">
+      <div className="flex min-h-screen">
         <Sidebar />
-        <main className="space-y-8 px-6 py-10 lg:px-10">
-          {children}
+        <main className="flex-1 space-y-8 px-6 py-8 sm:px-8 lg:px-12 lg:py-10 overflow-x-hidden">
+          <PageWrapper>{children}</PageWrapper>
         </main>
       </div>
     </div>
