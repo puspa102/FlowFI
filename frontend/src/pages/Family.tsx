@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { apiGet, apiPost } from '../api/client'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
@@ -19,6 +20,19 @@ interface FamilyStats {
   totalSpent: number
   remainingBudget: number
   percentUsed: number
+}
+
+const stagger = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 }
 
 export default function Family() {
@@ -60,131 +74,140 @@ export default function Family() {
   }
 
   const categories = [
-    { name: 'Housing', icon: '🏠', color: 'from-blue-500', percent: 35 },
-    { name: 'Groceries', icon: '🛒', color: 'from-green-500', percent: 25 },
-    { name: 'Leisure', icon: '🎮', color: 'from-purple-500', percent: 40 },
+    { name: 'Housing', icon: '&#127968;', color: 'bg-primary', percent: 35 },
+    { name: 'Groceries', icon: '&#128722;', color: 'bg-primary', percent: 25 },
+    { name: 'Leisure', icon: '&#127918;', color: 'bg-primary', percent: 40 },
   ]
 
   if (loading) {
-    return <div className="p-8">Loading...</div>
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
     <DashboardLayout>
-      <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Family Finance</h1>
-        <p className="text-slate-400">Unified control over household wealth and collective future goals for the Thompson family.</p>
-      </div>
+      <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
+        <motion.div variants={fadeUp}>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-platinum">Household</p>
+          <h1 className="mt-3 font-display italic text-3xl tracking-tight text-white md:text-4xl">Family Finance</h1>
+          <p className="mt-2 text-platinum">Unified control over household wealth and collective future goals for the Thompson family.</p>
+        </motion.div>
 
-      {/* Family Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="text-slate-400 text-sm">Total Members</div>
-            <div className="text-3xl font-bold text-white">{stats.totalMembers}</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="text-slate-400 text-sm">Total Budgeted</div>
-            <div className="text-3xl font-bold text-white">${stats.totalBudgeted.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="text-slate-400 text-sm">Total Spent</div>
-            <div className="text-3xl font-bold text-white">${stats.totalSpent.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="text-slate-400 text-sm">Remaining</div>
-            <div className="text-3xl font-bold text-green-400">${stats.remainingBudget.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Shared Budgets */}
-      <div className="bg-slate-800 rounded-lg p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Shared Budgets</h2>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded"
-          >
-            New Budget
-          </button>
-        </div>
-
-        {showForm && (
-          <form onSubmit={handleAddBudget} className="bg-slate-700 p-4 rounded mb-4 space-y-4">
-            <input
-              type="text"
-              name="category"
-              placeholder="Category (e.g., Housing)"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <input
-              type="month"
-              name="month"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <input
-              type="number"
-              step="0.01"
-              name="budgetAmount"
-              placeholder="Budget Amount"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded">
-              Create Budget
-            </button>
-          </form>
+        {/* Family Stats */}
+        {stats && (
+          <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="glass-card rounded-lg p-5">
+              <div className="text-platinum text-xs uppercase tracking-wider">Total Members</div>
+              <div className="text-3xl font-bold text-white mt-2">{stats.totalMembers}</div>
+            </div>
+            <div className="glass-card rounded-lg p-5">
+              <div className="text-platinum text-xs uppercase tracking-wider">Total Budgeted</div>
+              <div className="text-3xl font-bold text-white mt-2">${stats.totalBudgeted.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            </div>
+            <div className="glass-card rounded-lg p-5">
+              <div className="text-platinum text-xs uppercase tracking-wider">Total Spent</div>
+              <div className="text-3xl font-bold text-white mt-2">${stats.totalSpent.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            </div>
+            <div className="glass-card rounded-lg p-5">
+              <div className="text-platinum text-xs uppercase tracking-wider">Remaining</div>
+              <div className="text-3xl font-bold text-primary mt-2">${stats.remainingBudget.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            </div>
+          </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {categories.map((cat) => (
-            <div key={cat.name} className="bg-slate-700 p-4 rounded">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg">{cat.icon}</span>
-                <span className="text-slate-400 text-sm">{cat.percent}%</span>
-              </div>
-              <h3 className="font-semibold text-white mb-2">{cat.name}</h3>
-              <div className="w-full bg-slate-600 rounded-full h-2">
-                <div
-                  className={`bg-gradient-to-r ${cat.color} to-cyan-400 h-2 rounded-full`}
-                  style={{ width: `${cat.percent}%` }}
-                ></div>
-              </div>
-              <div className="text-sm text-slate-400 mt-2">$3,450 / $4,000</div>
-            </div>
-          ))}
-        </div>
-      </div>
+        {/* Shared Budgets */}
+        <motion.div variants={fadeUp} className="glass-card rounded-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-lg font-bold text-white">Shared Budgets</h2>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-primary hover:bg-primary/90 text-navy-950 font-semibold px-4 py-2 rounded-lg text-sm transition"
+            >
+              New Budget
+            </button>
+          </div>
 
-      {/* Budget List */}
-      <div className="bg-slate-800 rounded-lg p-6">
-        <h2 className="text-xl font-bold text-white mb-4">All Budgets</h2>
-        <div className="space-y-3">
-          {budgets.map((budget) => (
-            <div key={budget.id} className="bg-slate-700 p-4 rounded">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <div className="font-semibold text-white">{budget.category}</div>
-                  <div className="text-sm text-slate-400">{new Date(budget.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+          {showForm && (
+            <form onSubmit={handleAddBudget} className="bg-navy-800 rounded-lg border border-white/[0.08] p-5 mb-6 space-y-4">
+              <input
+                type="text"
+                name="category"
+                placeholder="Category (e.g., Housing)"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md placeholder:text-platinum/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <input
+                type="month"
+                name="month"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <input
+                type="number"
+                step="0.01"
+                name="budgetAmount"
+                placeholder="Budget Amount"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md placeholder:text-platinum/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-navy-950 font-semibold px-4 py-2.5 rounded-lg transition">
+                Create Budget
+              </button>
+            </form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {categories.map((cat) => (
+              <div key={cat.name} className="bg-white/[0.04] border border-white/[0.06] p-5 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-lg" dangerouslySetInnerHTML={{ __html: cat.icon }}></span>
+                  <span className="text-platinum text-xs font-medium">{cat.percent}%</span>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold text-white">${budget.spentAmount.toFixed(2)} / ${budget.budgetAmount.toFixed(2)}</div>
-                  <div className="text-sm text-slate-400">{budget.percentUsed}% used</div>
+                <h3 className="font-semibold text-white mb-3">{cat.name}</h3>
+                <div className="w-full bg-white/[0.06] rounded-full h-2">
+                  <div
+                    className={`${cat.color} h-2 rounded-full transition-all duration-500`}
+                    style={{ width: `${cat.percent}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-platinum mt-2">$3,450 / $4,000</div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Budget List */}
+        <motion.div variants={fadeUp} className="glass-card rounded-lg p-6">
+          <h2 className="text-lg font-bold text-white mb-5">All Budgets</h2>
+          <div className="space-y-3">
+            {budgets.map((budget) => (
+              <div key={budget.id} className="bg-white/[0.04] border border-white/[0.06] p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <div className="font-semibold text-white">{budget.category}</div>
+                    <div className="text-xs text-platinum">{new Date(budget.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-white">${budget.spentAmount.toFixed(2)} / ${budget.budgetAmount.toFixed(2)}</div>
+                    <div className="text-xs text-platinum">{budget.percentUsed}% used</div>
+                  </div>
+                </div>
+                <div className="w-full bg-white/[0.06] rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ${budget.percentUsed <= 50 ? 'bg-primary' : budget.percentUsed <= 80 ? 'bg-yellow-500' : 'bg-coral'}`}
+                    style={{ width: `${Math.min(budget.percentUsed, 100)}%` }}
+                  ></div>
                 </div>
               </div>
-              <div className="w-full bg-slate-600 rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${budget.percentUsed <= 50 ? 'bg-green-500' : budget.percentUsed <= 80 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                  style={{ width: `${Math.min(budget.percentUsed, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+          </div>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   )
 }

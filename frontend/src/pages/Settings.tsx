@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { getAuthToken, apiGet, apiPost } from '../api/client'
 
@@ -29,11 +28,7 @@ const defaultSettings: UserSettings = {
   country: 'United States',
   currency: 'USD',
   twoFactorEnabled: false,
-  notifications: {
-    email: true,
-    push: true,
-    sms: false,
-  },
+  notifications: { email: true, push: true, sms: false },
 }
 
 export default function Settings() {
@@ -45,44 +40,24 @@ export default function Settings() {
 
   useEffect(() => {
     const token = getAuthToken()
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
-    // Fetch user profile
+    if (!token) { navigate('/login'); return }
     const fetchProfile = async () => {
       try {
         const response = await apiGet<UserSettings>('/api/accounts/profile')
-        if (response.ok && response.data) {
-          setSettings(response.data)
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error)
-      } finally {
-        setIsLoading(false)
-      }
+        if (response.ok && response.data) setSettings(response.data)
+      } catch (error) { console.error('Failed to fetch profile:', error) }
+      finally { setIsLoading(false) }
     }
-
     fetchProfile()
   }, [navigate])
 
   const handleInputChange = (field: keyof UserSettings, value: string | boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
+    setSettings(prev => ({ ...prev, [field]: value }))
     setHasChanges(true)
   }
 
   const handleNotificationChange = (type: keyof UserSettings['notifications']) => {
-    setSettings((prev) => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [type]: !prev.notifications[type],
-      },
-    }))
+    setSettings(prev => ({ ...prev, notifications: { ...prev.notifications, [type]: !prev.notifications[type] } }))
     setHasChanges(true)
   }
 
@@ -90,314 +65,142 @@ export default function Settings() {
     setIsSaving(true)
     try {
       const response = await apiPost('/api/accounts/settings', {
-        fullName: settings.fullName,
-        email: settings.email,
-        phone: settings.phone,
-        country: settings.country,
-        currency: settings.currency,
-        twoFactorEnabled: settings.twoFactorEnabled,
-        notificationEmail: settings.notifications.email,
-        notificationPush: settings.notifications.push,
-        notificationSms: settings.notifications.sms,
+        fullName: settings.fullName, email: settings.email, phone: settings.phone, country: settings.country,
+        currency: settings.currency, twoFactorEnabled: settings.twoFactorEnabled,
+        notificationEmail: settings.notifications.email, notificationPush: settings.notifications.push, notificationSms: settings.notifications.sms,
       })
-
-      if (response.ok) {
-        setHasChanges(false)
-        console.log('Settings saved successfully')
-      } else {
-        console.error('Failed to save settings:', response.data)
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error)
-    } finally {
-      setIsSaving(false)
-    }
+      if (response.ok) setHasChanges(false)
+    } catch (error) { console.error('Error saving settings:', error) }
+    finally { setIsSaving(false) }
   }
 
   return (
     <DashboardLayout>
-          <header className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Account</p>
-            <h1 className="text-3xl font-semibold md:text-4xl">Settings</h1>
-            <p className="max-w-2xl text-sm text-slate-600 md:text-base">
-              Manage your account preferences, security settings, and notification preferences.
-            </p>
-          </header>
+      <header>
+        <h1 className="font-display text-4xl italic text-white">Settings</h1>
+        <p className="text-sm text-platinum mt-1">Manage your account preferences and security.</p>
+      </header>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-slate-300 border-t-primary"></div>
-                <p className="mt-4 text-sm text-slate-600">Loading your settings...</p>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+        </div>
+      ) : (
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {/* Profile */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-lg p-6">
+              <h2 className="text-base font-semibold text-white mb-1">Profile Information</h2>
+              <p className="text-xs text-platinum mb-5">Update your personal information</p>
+              <div className="grid gap-5 md:grid-cols-2">
+                {[
+                  { label: 'Full Name', field: 'fullName' as const, type: 'text', value: settings.fullName },
+                  { label: 'Email', field: 'email' as const, type: 'email', value: settings.email },
+                  { label: 'Phone', field: 'phone' as const, type: 'tel', value: settings.phone || '' },
+                  { label: 'Country', field: 'country' as const, type: 'text', value: settings.country || '' },
+                ].map(item => (
+                  <div key={item.field} className="space-y-1.5">
+                    <label className="block text-xs font-medium text-platinum">{item.label}</label>
+                    <Input
+                      type={item.type}
+                      value={item.value}
+                      onChange={(e) => handleInputChange(item.field, e.target.value)}
+                      className="bg-white/[0.04] border-white/[0.08] text-white rounded-md focus:border-primary/40 focus:ring-primary/20"
+                    />
+                  </div>
+                ))}
               </div>
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-8 lg:grid-cols-3">
-                {/* Settings Sections */}
-                <div className="space-y-8 lg:col-span-2">
-                {/* Profile Section */}
-                <Card className="border-slate-200/70 bg-white">
-                  <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
-                    <CardDescription>Update your personal information</CardDescription>
-                  </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Full Name</label>
-                      <Input
-                        type="text"
-                        value={settings.fullName}
-                        onChange={(e) => handleInputChange('fullName', e.target.value)}
-                        placeholder="Enter your full name"
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Email</label>
-                      <Input
-                        type="email"
-                        value={settings.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder="Enter your email"
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Phone</label>
-                      <Input
-                        type="tel"
-                        value={settings.phone || ''}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="Enter your phone number"
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-700">Country</label>
-                      <Input
-                        type="text"
-                        value={settings.country || ''}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
-                        placeholder="Enter your country"
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            </motion.div>
 
-              {/* Preferences Section */}
-              <Card className="border-slate-200/70 bg-white">
-                <CardHeader>
-                  <CardTitle>Preferences</CardTitle>
-                  <CardDescription>Customize your platform experience</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-slate-900">Currency</p>
-                        <p className="text-sm text-slate-600">Set your preferred currency for transactions</p>
-                      </div>
-                      <select
-                        value={settings.currency}
-                        onChange={(e) => handleInputChange('currency', e.target.value)}
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="USD">USD ($)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="GBP">GBP (£)</option>
-                        <option value="JPY">JPY (¥)</option>
-                        <option value="NPR">NPR (रु)</option>
-                        <option value="CAD">CAD (C$)</option>
-                        <option value="AUD">AUD (A$)</option>
-                      </select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Preferences */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-lg p-6">
+              <h2 className="text-base font-semibold text-white mb-1">Preferences</h2>
+              <p className="text-xs text-platinum mb-5">Customize your platform experience</p>
+              <div className="flex items-center justify-between">
+                <div><p className="text-sm font-medium text-white">Currency</p><p className="text-xs text-platinum">Set your preferred currency</p></div>
+                <select value={settings.currency} onChange={(e) => handleInputChange('currency', e.target.value)} className="rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/40">
+                  <option value="USD">USD ($)</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option><option value="NPR">NPR</option><option value="CAD">CAD</option><option value="AUD">AUD</option>
+                </select>
+              </div>
+            </motion.div>
 
-              {/* Notifications Section */}
-              <Card className="border-slate-200/70 bg-white">
-                <CardHeader>
-                  <CardTitle>Notifications</CardTitle>
-                  <CardDescription>Manage how you receive updates from FloFi</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200/50 bg-slate-50/50 p-4">
-                      <div>
-                        <p className="font-medium text-slate-900">Email Notifications</p>
-                        <p className="text-sm text-slate-600">Receive updates via email</p>
-                      </div>
-                      <button
-                        onClick={() => handleNotificationChange('email')}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-                          settings.notifications.email ? 'bg-primary' : 'bg-slate-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                            settings.notifications.email ? 'translate-x-5' : 'translate-x-1'
-                          } translate-y-0.5`}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200/50 bg-slate-50/50 p-4">
-                      <div>
-                        <p className="font-medium text-slate-900">Push Notifications</p>
-                        <p className="text-sm text-slate-600">Receive push alerts on your device</p>
-                      </div>
-                      <button
-                        onClick={() => handleNotificationChange('push')}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-                          settings.notifications.push ? 'bg-primary' : 'bg-slate-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                            settings.notifications.push ? 'translate-x-5' : 'translate-x-1'
-                          } translate-y-0.5`}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200/50 bg-slate-50/50 p-4">
-                      <div>
-                        <p className="font-medium text-slate-900">SMS Notifications</p>
-                        <p className="text-sm text-slate-600">Receive text message alerts</p>
-                      </div>
-                      <button
-                        onClick={() => handleNotificationChange('sms')}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-                          settings.notifications.sms ? 'bg-primary' : 'bg-slate-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                            settings.notifications.sms ? 'translate-x-5' : 'translate-x-1'
-                          } translate-y-0.5`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Security Section */}
-              <Card className="border-slate-200/70 bg-white">
-                <CardHeader>
-                  <CardTitle>Security</CardTitle>
-                  <CardDescription>Manage your account security</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200/50 bg-slate-50/50 p-4">
-                      <div>
-                        <p className="font-medium text-slate-900">Two-Factor Authentication</p>
-                        <p className="text-sm text-slate-600">Add extra security to your account</p>
-                      </div>
-                      <button
-                        onClick={() => handleInputChange('twoFactorEnabled', !settings.twoFactorEnabled)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-                          settings.twoFactorEnabled ? 'bg-primary' : 'bg-slate-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                            settings.twoFactorEnabled ? 'translate-x-5' : 'translate-x-1'
-                          } translate-y-0.5`}
-                        />
-                      </button>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 transition hover:bg-slate-50"
+            {/* Notifications */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-lg p-6">
+              <h2 className="text-base font-semibold text-white mb-1">Notifications</h2>
+              <p className="text-xs text-platinum mb-5">Manage how you receive updates</p>
+              <div className="space-y-3">
+                {[
+                  { key: 'email' as const, label: 'Email Notifications', desc: 'Receive updates via email' },
+                  { key: 'push' as const, label: 'Push Notifications', desc: 'Receive push alerts on device' },
+                  { key: 'sms' as const, label: 'SMS Notifications', desc: 'Receive text message alerts' },
+                ].map(item => (
+                  <div key={item.key} className="flex items-center justify-between rounded-md border border-white/[0.04] bg-white/[0.02] p-4">
+                    <div><p className="text-sm font-medium text-white">{item.label}</p><p className="text-xs text-platinum">{item.desc}</p></div>
+                    <button
+                      onClick={() => handleNotificationChange(item.key)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${settings.notifications[item.key] ? 'bg-primary' : 'bg-white/[0.12]'}`}
                     >
-                      Change Password
-                    </Button>
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${settings.notifications[item.key] ? 'translate-x-5' : 'translate-x-0.5'} translate-y-0.5`} />
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ))}
+              </div>
+            </motion.div>
 
-            {/* Sidebar Stats */}
-            <div className="space-y-6 lg:col-span-1">
-              <Card className="border-slate-200/70 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-base">Account Status</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-600">Plan</p>
-                    <Badge variant="default">Pro</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-600">Status</p>
-                    <Badge variant="default">Active</Badge>
-                  </div>
-                  <Separator />
-                  <p className="text-xs text-slate-500">Member since November 2024</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200/70 bg-white">
-                <CardHeader>
-                  <CardTitle className="text-base">API Keys</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    variant="outline"
-                    className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-slate-900 transition hover:bg-slate-50"
+            {/* Security */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-lg p-6">
+              <h2 className="text-base font-semibold text-white mb-1">Security</h2>
+              <p className="text-xs text-platinum mb-5">Manage your account security</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-md border border-white/[0.04] bg-white/[0.02] p-4">
+                  <div><p className="text-sm font-medium text-white">Two-Factor Authentication</p><p className="text-xs text-platinum">Extra security layer</p></div>
+                  <button
+                    onClick={() => handleInputChange('twoFactorEnabled', !settings.twoFactorEnabled)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${settings.twoFactorEnabled ? 'bg-primary' : 'bg-white/[0.12]'}`}
                   >
-                    Generate New Key
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="border-red-200/50 bg-red-50">
-                <CardHeader>
-                  <CardTitle className="text-base text-red-900">Danger Zone</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    variant="destructive"
-                    className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition hover:bg-red-700"
-                  >
-                    Delete Account
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${settings.twoFactorEnabled ? 'translate-x-5' : 'translate-x-0.5'} translate-y-0.5`} />
+                  </button>
+                </div>
+                <Button variant="outline" className="w-full">Change Password</Button>
+              </div>
+            </motion.div>
           </div>
 
-          {/* Action Buttons */}
-              <div className="sticky bottom-0 flex gap-3 border-t border-slate-200/70 bg-white/80 px-6 py-4 backdrop-blur lg:px-10">
-                <Button
-                  variant="outline"
-                  className="rounded-lg border border-slate-200 bg-white px-6 py-2 text-slate-900 transition hover:bg-slate-50"
-                  onClick={() => {
-                    setSettings(defaultSettings)
-                    setHasChanges(false)
-                  }}
-                  disabled={!hasChanges}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="rounded-lg bg-primary px-6 py-2 text-white transition hover:bg-primary/90"
-                  onClick={handleSaveSettings}
-                  disabled={!hasChanges || isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
+          {/* Sidebar */}
+          <div className="space-y-5 lg:col-span-1">
+            <div className="glass-card rounded-lg p-5">
+              <h3 className="text-sm font-semibold text-white mb-4">Account Status</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between"><span className="text-xs text-platinum">Plan</span><Badge className="bg-primary/10 text-primary border-0">Pro</Badge></div>
+                <div className="flex items-center justify-between"><span className="text-xs text-platinum">Status</span><Badge className="bg-primary/10 text-primary border-0">Active</Badge></div>
+                <div className="border-t border-white/[0.06] pt-3"><p className="text-xs text-platinum">Member since November 2024</p></div>
               </div>
-            </>
-          )}
+            </div>
+
+            <div className="glass-card rounded-lg p-5">
+              <h3 className="text-sm font-semibold text-white mb-3">API Keys</h3>
+              <Button variant="outline" className="w-full text-xs">Generate New Key</Button>
+            </div>
+
+            <div className="glass-card rounded-lg p-5 border-coral/20">
+              <h3 className="text-sm font-semibold text-coral mb-3">Danger Zone</h3>
+              <Button variant="destructive" className="w-full text-xs">Delete Account</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Bar */}
+      {hasChanges && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-3 bg-navy-800 border border-white/[0.08] rounded-lg px-6 py-3 shadow-elevated z-50"
+        >
+          <Button variant="outline" size="sm" onClick={() => { setSettings(defaultSettings); setHasChanges(false) }}>Cancel</Button>
+          <Button size="sm" onClick={handleSaveSettings} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
+        </motion.div>
+      )}
     </DashboardLayout>
   )
 }

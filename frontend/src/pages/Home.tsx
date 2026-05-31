@@ -26,7 +26,7 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="relative min-h-screen bg-[#030912] text-white antialiased">
+    <div className="relative min-h-screen bg-navy-950 text-white antialiased">
       {/* SEO: single h1 is in HeroSection */}
 
       {/* Sticky Navbar */}

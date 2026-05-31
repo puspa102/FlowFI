@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { apiGet, apiPost, apiDelete } from '../api/client'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 
@@ -16,6 +17,19 @@ interface NetLiquidity {
   totalLiquidity: number
   connections: BankConnection[]
   lastUpdated: string
+}
+
+const stagger = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 }
 
 export default function BankAccounts() {
@@ -59,161 +73,171 @@ export default function BankAccounts() {
   }
 
   if (loading) {
-    return <div className="p-8">Loading...</div>
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Bank Connections</h1>
-        <p className="text-slate-400">Manage your global financial ecosystem in one ethereal space. Real-time synchronization across all your high-yield assets.</p>
-      </div>
+      <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-8">
+        <motion.div variants={fadeUp}>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-platinum">Global Accounts</p>
+          <h1 className="mt-3 font-display italic text-3xl tracking-tight text-white md:text-4xl">Bank Connections</h1>
+          <p className="mt-2 text-platinum">Manage your global financial ecosystem in one ethereal space. Real-time synchronization across all your high-yield assets.</p>
+        </motion.div>
 
-      {/* Security Badge */}
-      <div className="bg-green-900 border border-green-700 rounded-lg p-4 mb-8 flex items-center gap-2">
-        <span className="text-green-400">✓</span>
-        <span className="text-white">SECURED BY FLOFI FROST</span>
-      </div>
+        {/* Security Badge */}
+        <motion.div variants={fadeUp} className="glass-card rounded-lg p-4 flex items-center gap-3 border-primary/20">
+          <span className="text-primary text-lg">&#10003;</span>
+          <span className="text-primary font-semibold text-sm uppercase tracking-wide">Secured by FloFi Frost</span>
+        </motion.div>
 
-      {/* Net Liquidity */}
-      {liquidity && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-slate-800 rounded-lg p-6">
-            <div className="text-slate-400 text-sm mb-2">NET LIQUIDITY</div>
-            <div className="text-4xl font-bold text-white">${liquidity.totalLiquidity.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
-            <div className="text-sm text-slate-400 mt-2">↑ 4.2% from last month</div>
-          </div>
-
-          <div className="bg-slate-800 rounded-lg p-6">
-            <div className="text-slate-400 text-sm mb-2">IMPORT STATUS</div>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
-                <span className="text-white">Monthly Reconciliation</span>
-              </div>
-              <span className="text-slate-400 text-sm">452 transactions processed</span>
+        {/* Net Liquidity */}
+        {liquidity && (
+          <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="glass-card rounded-lg p-6">
+              <div className="text-platinum text-xs uppercase tracking-wider mb-2">Net Liquidity</div>
+              <div className="text-4xl font-bold text-white">${liquidity.totalLiquidity.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+              <div className="text-sm text-primary mt-2">+4.2% from last month</div>
             </div>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                <span className="text-white">Pending Import</span>
+
+            <div className="glass-card rounded-lg p-6">
+              <div className="text-platinum text-xs uppercase tracking-wider mb-2">Import Status</div>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="inline-block w-2.5 h-2.5 bg-primary rounded-full"></span>
+                <span className="text-white text-sm">Monthly Reconciliation</span>
+                <span className="text-platinum text-xs ml-auto">452 transactions processed</span>
               </div>
-              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">LIVE</span>
+              <div className="flex items-center gap-2 mt-3">
+                <span className="inline-block w-2.5 h-2.5 bg-blue-400 rounded-full animate-pulse"></span>
+                <span className="text-white text-sm">Pending Import</span>
+                <span className="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded ml-auto font-semibold">LIVE</span>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Linked Accounts */}
-      <div className="bg-slate-800 rounded-lg p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-white">Linked Accounts</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSync}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm"
-            >
-              Sync Now
-            </button>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className="bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded"
-            >
-              Connect New Account
-            </button>
-          </div>
-        </div>
-
-        {showForm && (
-          <form onSubmit={handleAddConnection} className="bg-slate-700 p-4 rounded mb-4 space-y-4">
-            <input
-              type="text"
-              name="accountName"
-              placeholder="Account Name"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <select name="accountType" className="w-full bg-slate-600 text-white px-3 py-2 rounded" required>
-              <option value="">Select Type</option>
-              <option value="CHECKING">Checking</option>
-              <option value="SAVINGS">Savings</option>
-              <option value="INVESTMENT">Investment</option>
-            </select>
-            <input
-              type="number"
-              step="0.01"
-              name="balance"
-              placeholder="Balance"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <input
-              type="text"
-              name="maskedAccountNumber"
-              placeholder="Account Number (Last 4)"
-              className="w-full bg-slate-600 text-white px-3 py-2 rounded"
-              required
-            />
-            <button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-600 text-white px-4 py-2 rounded">
-              Connect Account
-            </button>
-          </form>
+          </motion.div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {liquidity?.connections.map((conn) => (
-            <div key={conn.id} className="bg-slate-700 rounded-lg p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="text-sm text-slate-400">ACTIVE</div>
-                  <div className="font-semibold text-white mt-1">{conn.accountName}</div>
-                </div>
-                <div className="text-slate-400">
-                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-white mb-2">${conn.balance.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
-              <div className="text-sm text-slate-400 mb-3">
-                {conn.accountType} • {conn.maskedAccountNumber}
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-400">Synced {new Date(conn.lastSynced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ago</span>
-                <span className="text-slate-400">ACTIVE</span>
-              </div>
+        {/* Linked Accounts */}
+        <motion.div variants={fadeUp} className="glass-card rounded-lg p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white">Linked Accounts</h2>
+            <div className="flex gap-3">
               <button
-                onClick={() => handleDeleteConnection(conn.id)}
-                className="w-full mt-3 bg-slate-600 hover:bg-slate-500 text-red-400 px-3 py-2 rounded text-sm"
+                onClick={handleSync}
+                className="border border-white/[0.08] hover:bg-white/[0.04] text-platinum hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition"
               >
-                Disconnect
+                Sync Now
+              </button>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-primary hover:bg-primary/90 text-navy-950 font-semibold px-4 py-2 rounded-lg text-sm transition"
+              >
+                Connect New Account
               </button>
             </div>
-          ))}
-
-          {/* Add Link Card */}
-          <div className="bg-slate-700 rounded-lg p-4 flex items-center justify-center min-h-[200px]">
-            <button className="text-center">
-              <div className="text-4xl mb-2">+</div>
-              <div className="text-white">Link Another Asset</div>
-              <div className="text-sm text-slate-400 mt-1">Support for 5,000+ banks</div>
-            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Connect Popular Institutions */}
-      <div className="bg-slate-800 rounded-lg p-6">
-        <h3 className="text-lg font-bold text-white mb-4">CONNECT POPULAR INSTITUTIONS</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {['Chase Bank', 'Bank of America', 'Barclays', 'Goldman Sachs', 'Revolut', 'Wise'].map((bank) => (
-            <button
-              key={bank}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded text-sm"
+          {showForm && (
+            <motion.form
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              onSubmit={handleAddConnection}
+              className="bg-navy-800 rounded-lg border border-white/[0.08] p-5 mb-6 space-y-4"
             >
-              {bank}
-            </button>
-          ))}
-        </div>
-      </div>
+              <input
+                type="text"
+                name="accountName"
+                placeholder="Account Name"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md placeholder:text-platinum/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <select name="accountType" className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md focus:outline-none focus:ring-2 focus:ring-primary" required>
+                <option value="">Select Type</option>
+                <option value="CHECKING">Checking</option>
+                <option value="SAVINGS">Savings</option>
+                <option value="INVESTMENT">Investment</option>
+              </select>
+              <input
+                type="number"
+                step="0.01"
+                name="balance"
+                placeholder="Balance"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md placeholder:text-platinum/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <input
+                type="text"
+                name="maskedAccountNumber"
+                placeholder="Account Number (Last 4)"
+                className="w-full bg-white/[0.04] border border-white/[0.08] text-white px-3 py-2.5 rounded-md placeholder:text-platinum/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+              <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-navy-950 font-semibold px-4 py-2.5 rounded-lg transition">
+                Connect Account
+              </button>
+            </motion.form>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {liquidity?.connections.map((conn) => (
+              <div key={conn.id} className="bg-white/[0.04] border border-white/[0.06] rounded-lg p-5 hover:border-white/[0.12] transition">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="text-xs text-primary uppercase font-semibold tracking-wider">Active</div>
+                    <div className="font-semibold text-white mt-1">{conn.accountName}</div>
+                  </div>
+                  <span className="inline-block w-2 h-2 bg-primary rounded-full"></span>
+                </div>
+                <div className="text-2xl font-bold text-white mb-2">${conn.balance.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+                <div className="text-sm text-platinum mb-3">
+                  {conn.accountType} &middot; {conn.maskedAccountNumber}
+                </div>
+                <div className="flex justify-between items-center text-xs text-platinum">
+                  <span>Synced {new Date(conn.lastSynced).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ago</span>
+                  <span className="text-primary font-medium">ACTIVE</span>
+                </div>
+                <button
+                  onClick={() => handleDeleteConnection(conn.id)}
+                  className="w-full mt-4 border border-coral/20 hover:bg-coral/10 text-coral px-3 py-2 rounded-lg text-sm font-medium transition"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ))}
+
+            {/* Add Link Card */}
+            <div className="bg-white/[0.04] border border-dashed border-white/[0.12] rounded-lg p-5 flex items-center justify-center min-h-[200px] hover:border-primary/40 transition cursor-pointer"
+              onClick={() => setShowForm(true)}
+            >
+              <div className="text-center">
+                <div className="text-3xl text-primary mb-2">+</div>
+                <div className="text-white font-medium">Link Another Asset</div>
+                <div className="text-xs text-platinum mt-1">Support for 5,000+ banks</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Connect Popular Institutions */}
+        <motion.div variants={fadeUp} className="glass-card rounded-lg p-6">
+          <h3 className="text-sm font-semibold text-platinum uppercase tracking-wider mb-4">Connect Popular Institutions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {['Chase Bank', 'Bank of America', 'Barclays', 'Goldman Sachs', 'Revolut', 'Wise'].map((bank) => (
+              <button
+                key={bank}
+                className="bg-white/[0.04] border border-white/[0.06] hover:border-primary/40 hover:bg-white/[0.06] text-white px-4 py-3 rounded-lg text-sm font-medium transition"
+              >
+                {bank}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   )
 }
