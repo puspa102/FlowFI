@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
+import { Settings2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { apiPost } from '../api/client'
+import { setToken } from '@/store/slices/authSlice'
 
 type RegisterResponse = {
-  message?: string
+  token?: string
   error?: string
 }
 
 export default function Register() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,17 +35,33 @@ export default function Register() {
       fullName, email, password, confirmPassword, termsAccepted,
     })
 
-    if (response.ok) { navigate('/login'); return }
+    if (response.ok && response.data?.token) {
+      dispatch(setToken(response.data.token))
+      navigate('/dashboard')
+      return
+    }
+
+    if (response.ok) {
+      navigate('/login')
+      return
+    }
+
     setError(response.data?.error ?? 'Unable to create account. Please try again.')
     setIsSubmitting(false)
   }
 
   return (
-    <div className="relative min-h-screen bg-navy-950">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(0,212,170,0.08),transparent_45%),radial-gradient(circle_at_82%_10%,rgba(0,212,170,0.04),transparent_40%)]" />
+    <div className="relative min-h-screen" style={{ background: 'var(--navy-950)' }}>
+      <Link
+        to="/settings"
+        className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80 backdrop-blur-md transition hover:border-primary/30 hover:bg-white/10 hover:text-white sm:right-6 sm:top-6"
+      >
+        <Settings2 className="h-4 w-4" />
+        Appearance Settings
+      </Link>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.08),transparent_45%),radial-gradient(circle_at_82%_10%,rgba(20,184,166,0.04),transparent_40%)]" />
       <div className="relative grid min-h-screen lg:grid-cols-2">
-        {/* Register Form */}
-        <div className="flex items-center justify-center px-6 py-12">
+        <div className="flex items-center justify-center px-6 py-12 pt-24 lg:pt-12">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -49,68 +69,67 @@ export default function Register() {
             className="w-full max-w-md"
           >
             <div className="mb-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary mb-2">FloFi</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] mb-2" style={{ color: 'var(--primary)' }}>FloFi</p>
               <h1 className="font-display text-4xl italic text-white">Create your account</h1>
-              <p className="text-sm text-platinum mt-2">Start engineering your wealth with intelligent insights.</p>
+              <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>Start engineering your wealth with intelligent insights.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-platinum">Full name</label>
-                <Input type="text" placeholder="Alex Morgan" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-platinum/40 focus:border-primary/40 focus:ring-primary/20" />
+                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Full name</label>
+                <Input type="text" placeholder="Alex Morgan" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-platinum">Email</label>
-                <Input type="email" placeholder="alex@flofi.ai" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-platinum/40 focus:border-primary/40 focus:ring-primary/20" />
+                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Email</label>
+                <Input type="email" placeholder="alex@flofi.ai" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-platinum">Password</label>
-                <Input type="password" placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-platinum/40 focus:border-primary/40 focus:ring-primary/20" />
+                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Password</label>
+                <Input type="password" placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-platinum">Confirm password</label>
-                <Input type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-platinum/40 focus:border-primary/40 focus:ring-primary/20" />
+                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Confirm password</label>
+                <Input type="password" placeholder="Re-enter your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20" />
               </div>
-              <label className="flex items-center gap-2 text-xs text-platinum">
+              <label className="flex items-center gap-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
                 <Checkbox id="terms" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(Boolean(checked))} />
                 I agree to the terms and privacy policy
               </label>
-              {error && <div className="rounded-md border border-coral/20 bg-coral/5 px-4 py-3 text-sm text-coral">{error}</div>}
+              {error && <div className="rounded-md border px-4 py-3 text-sm" style={{ borderColor: 'rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', color: 'var(--danger)' }}>{error}</div>}
               <Button className="w-full" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Creating account...' : 'Create account'}
               </Button>
             </form>
 
-            <p className="mt-6 text-sm text-platinum">
+            <p className="mt-6 text-sm" style={{ color: 'var(--muted-foreground)' }}>
               Already have an account?{' '}
-              <Link className="font-semibold text-primary hover:underline" to="/login">Sign in</Link>
+              <Link className="font-semibold hover:underline" style={{ color: 'var(--primary)' }} to="/login">Sign in</Link>
             </p>
           </motion.div>
         </div>
 
-        {/* Right Hero */}
         <div className="relative hidden items-center justify-center px-8 py-12 lg:flex">
-          <div className="absolute inset-0 bg-gradient-to-br from-navy-900 via-navy-950 to-navy-800" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, var(--navy-900), var(--navy-950), var(--navy-800))' }} />
           <div className="absolute inset-0 dot-pattern opacity-30" />
           <div className="relative z-10 flex max-w-md flex-col gap-6">
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Wealth orchestration</p>
+              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--primary)' }}>Wealth orchestration</p>
               <h2 className="font-display text-3xl italic text-white">Launch your AI-driven wealth plan.</h2>
-              <p className="text-sm text-platinum leading-relaxed">
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
                 Connect assets, set intelligent budgets, and receive predictive signals tailored to your goals.
               </p>
             </div>
             <div className="glass-card rounded-lg p-5">
-              <h3 className="text-sm font-semibold text-primary">AI Insight</h3>
-              <p className="text-xs text-platinum mt-1">Model-driven recommendations for faster goal acceleration.</p>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>AI Insight</h3>
+              <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>Model-driven recommendations for faster goal acceleration.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="glass-card rounded-lg p-4">
-                <p className="text-[10px] uppercase tracking-wider text-platinum">Targets tracked</p>
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Targets tracked</p>
                 <p className="text-xl font-bold text-white mt-1">12</p>
               </div>
               <div className="glass-card rounded-lg p-4">
-                <p className="text-[10px] uppercase tracking-wider text-platinum">Monthly lift</p>
+                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Monthly lift</p>
                 <p className="text-xl font-bold text-white mt-1">+14%</p>
               </div>
             </div>

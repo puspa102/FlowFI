@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -12,7 +13,9 @@ import {
   CreditCard,
   Settings,
   LogOut,
+  Wallet,
 } from 'lucide-react'
+import { clearToken } from '@/store/slices/authSlice'
 
 const navItems = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
@@ -21,32 +24,53 @@ const navItems = [
   { label: 'Bank Accounts', to: '/bank-accounts', icon: Landmark },
   { label: 'Investments', to: '/investments', icon: TrendingUp },
   { label: 'Savings Goals', to: '/savings-goals', icon: Target },
-  { label: 'Family', to: '/family', icon: Users },
-  { label: 'AI Assistant', to: '/ai-assistant', icon: Bot },
-  { label: 'Subscriptions', to: '/subscriptions', icon: CreditCard },
-  { label: 'Settings', to: '/settings', icon: Settings },
+  { label: 'AI Assistant', to: '/ai-assistant', icon: Bot, isAI: true },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const dispatch = useDispatch()
+
+  const handleLogout = () => {
+    dispatch(clearToken())
+    navigate('/login')
+  }
 
   return (
-    <aside className="hidden lg:flex flex-col w-[220px] min-h-screen bg-navy-950 border-r border-white/[0.06] px-4 py-6">
+    <motion.aside
+      key={`sidebar-${location.pathname}`}
+      className="h-full overflow-y-auto flex flex-col w-[260px] py-6 bg-[--sidebar-bg] border-r border-[rgba(114,120,119,0.15)]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-3 pb-8">
-        <div className="relative flex h-8 w-8 items-center justify-center">
-          <span className="font-display text-2xl italic text-white">F</span>
-          <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-primary animate-pulse-dot" />
+      <div className="flex items-center gap-3 px-6 pb-8">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ background: 'var(--primary)' }}
+        >
+          <Wallet className="text-white bg-white/20 p-1.5 rounded-lg" size={24} />
         </div>
-        <span className="font-display text-xl italic text-white">Flofi</span>
+        <div className="flex flex-col">
+          <span className="text-lg font-bold font-display tracking-tight text-[--foreground]">FloFi</span>
+          <span className="text-[9px] font-bold tracking-widest text-[#727877] uppercase uppercase mt-[-2px]">WEALTH INTELLIGENCE</span>
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1.5 px-3">
         {navItems.map((item, i) => {
           const isActive = location.pathname === item.to
           const Icon = item.icon
+          const isAI = item.isAI
+
+          const defaultColor = 'var(--muted-foreground)'
+          const hoverColor = 'var(--foreground)'
+          const activeColor = 'var(--info)'
+          const activeBg = 'var(--primary-light)'
+          const activeBorder = 'var(--info)'
 
           return (
             <motion.div
@@ -57,48 +81,69 @@ export default function Sidebar() {
             >
               <Link
                 to={item.to}
-                className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200"
+                className={`group relative flex items-center gap-3 px-4 py-3 text-[14px] font-medium transition-all duration-200 rounded-xl ${isActive ? 'font-semibold' : ''}`}
                 style={{
-                  color: isActive ? '#00D4AA' : '#8892A4',
-                  background: isActive ? 'rgba(0, 212, 170, 0.1)' : 'transparent',
+                  color: isActive ? activeColor : defaultColor,
+                  background: isActive ? activeBg : 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = hoverColor
+                    e.currentTarget.style.background = 'rgba(114,120,119,0.05)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.color = defaultColor
+                    e.currentTarget.style.background = 'transparent'
+                  }
                 }}
               >
+                <Icon
+                  size={20}
+                  className={isActive ? "text-[--info]" : "text-[--muted-foreground] group-hover:text-[--foreground]"}
+                  style={{ transition: 'color 150ms ease' }}
+                />
+                <span className="flex-1 tracking-tight">
+                  {item.label}
+                </span>
+                
                 {isActive && (
                   <motion.span
                     layoutId="sidebar-active"
-                    className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-primary"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-full"
+                    style={{ background: activeBorder }}
                     transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
-                <Icon size={18} className={isActive ? 'text-primary' : 'text-platinum group-hover:text-white'} style={{ transition: 'color 150ms ease' }} />
-                <span className="group-hover:text-white" style={{ transition: 'color 150ms ease' }}>
-                  {item.label}
-                </span>
               </Link>
             </motion.div>
           )
         })}
       </nav>
 
-      {/* User section */}
-      <div className="mt-auto border-t border-white/[0.06] pt-4 px-3">
-        <div className="flex items-center gap-3 pb-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06]">
-            <span className="text-xs font-semibold text-white">U</span>
-          </div>
-          <span className="text-sm font-medium text-platinum">My Account</span>
-        </div>
+      {/* Upgrade card */}
+      <div className="mx-6 mb-4 mt-auto rounded-2xl p-5 bg-[rgba(114,120,119,0.03)] border border-[rgba(114,120,119,0.1)]">
+        <p className="text-[10px] font-bold text-[#727877] tracking-wider uppercase mb-2">PRO PLAN</p>
+        <p className="text-[13px] font-medium text-[--foreground] mb-4 leading-snug">Unlock predictive wealth modeling.</p>
         <button
-          onClick={() => {
-            localStorage.removeItem('flofi_token')
-            navigate('/login')
-          }}
-          className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm text-platinum/60 transition-all duration-150 hover:bg-white/[0.04] hover:text-white"
+          className="w-full rounded-xl py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[--primary-hover]"
+          style={{ background: 'var(--primary)' }}
         >
-          <LogOut size={16} />
+          Upgrade to Pro
+        </button>
+      </div>
+
+      {/* Logout */}
+      <div className="px-6 border-t border-[rgba(114,120,119,0.1)] pt-4">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 py-2 text-[14px] font-medium text-[--foreground] transition-all duration-150 hover:text-[--danger]"
+        >
+          <LogOut size={20} />
           Logout
         </button>
       </div>
-    </aside>
+    </motion.aside>
   )
 }
