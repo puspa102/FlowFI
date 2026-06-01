@@ -12,6 +12,7 @@ const Transactions = lazy(() => import('./pages/Transactions'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Profile = lazy(() => import('./pages/Profile'))
 const AIAssistant = lazy(() => import('./pages/AIAssistant'))
 const Investments = lazy(() => import('./pages/Investments'))
 const Family = lazy(() => import('./pages/Family'))
@@ -49,6 +50,7 @@ function AnimatedRoutes() {
           <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
           <Route path="/budgets" element={<ProtectedRoute><Budgets /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
           <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
           <Route path="/family" element={<ProtectedRoute><Family /></ProtectedRoute>} />

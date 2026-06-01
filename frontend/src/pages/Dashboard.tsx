@@ -1,5 +1,3 @@
-import { useMemo, useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   Wallet,
@@ -7,14 +5,9 @@ import {
   TrendingUp,
   ShoppingBag,
   Plus,
-  Target,
-  Users,
-  ArrowUpRight,
-  ArrowDownRight,
   Bot,
 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { useGetDashboardSummaryQuery, useGetDashboardAnalyticsQuery } from '@/store/api/dashboardApi'
@@ -23,58 +16,15 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
 }
 
-function AnimatedNumber({ value }: { value: number }) {
-  const [display, setDisplay] = useState(0)
-  const ref = useRef<number | null>(null)
-  const shouldReduce = useReducedMotion()
-
-  useEffect(() => {
-    if (shouldReduce) {
-      setDisplay(value)
-      return
-    }
-    const duration = 800
-    const start = performance.now()
-
-    function tick(now: number) {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplay(Math.round((value) * eased))
-      if (progress < 1) {
-        ref.current = requestAnimationFrame(tick)
-      }
-    }
-
-    ref.current = requestAnimationFrame(tick)
-    return () => { if (ref.current) cancelAnimationFrame(ref.current) }
-  }, [value, shouldReduce])
-
-  return <>{formatCurrency(display)}</>
-}
 
 export default function Dashboard() {
   const shouldReduce = useReducedMotion()
-  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummaryQuery(undefined)
-  const { data: analytics, isLoading: analyticsLoading } = useGetDashboardAnalyticsQuery(undefined)
+  const { isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummaryQuery(undefined)
+  const { isLoading: analyticsLoading } = useGetDashboardAnalyticsQuery(undefined)
 
   const isLoading = summaryLoading || analyticsLoading
 
-  const cashFlowList = useMemo(() => {
-    if (analytics?.monthlyPerformances?.length) {
-      return analytics.monthlyPerformances.map((p: any) => ({
-        label: p.month,
-        income: p.income,
-        expense: p.expense,
-      }))
-    }
-    if (summary?.cashFlow?.length) return summary.cashFlow
-    return []
-  }, [analytics, summary])
 
-  const chartMax = useMemo(() => {
-    return Math.max(1, ...cashFlowList.map((item: any) => Math.max(item.income, item.expense)))
-  }, [cashFlowList])
 
   if (isLoading) {
     return (
@@ -105,15 +55,6 @@ export default function Dashboard() {
     )
   }
 
-  const totalBalance = summary?.totalBalance ?? 0
-  const balanceChange = summary?.balanceChangePercent ?? 0
-  const netSavings = analytics?.netSavings ?? 0
-  const savingsRate = analytics?.savingsRate ?? 0
-  const incomeChange = analytics?.incomeChangePercent ?? 0
-  const largestCategory = analytics?.largestCategory
-  const healthScore = summary?.health?.score ?? 0
-  const insight = summary?.insight
-  const recentTransactions = summary?.recentTransactions ?? []
 
   const statCards = [
     {

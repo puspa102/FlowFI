@@ -38,9 +38,6 @@ export default function Settings() {
 
   const [settings, setSettings] = useState<UserSettings>(defaultSettings)
   const [hasChanges, setHasChanges] = useState(false)
-
-  // Initialize settings from profile when it loads
-  const [settings, setSettings] = useState<UserSettings>(defaultSettings)
   
   useEffect(() => {
     // Only set settings if there are no unsaved changes, 
