@@ -59,7 +59,6 @@ const fallbackPricing: PricingPayload = {
 
 export default function Pricing() {
   const [pricing, setPricing] = useState<PricingPayload | null>(null)
-  const [authRequired, setAuthRequired] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
@@ -68,7 +67,6 @@ export default function Pricing() {
       .then((response) => {
         if (!isMounted) return
         if (response.ok && response.data) setPricing(response.data)
-        else if (response.status === 401) setAuthRequired(true)
       })
       .catch(() => {})
     return () => { isMounted = false }
@@ -81,7 +79,7 @@ export default function Pricing() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_12%,rgba(0,212,170,0.06),transparent_45%),radial-gradient(circle_at_80%_16%,rgba(0,212,170,0.04),transparent_40%)]" />
 
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-navy-950/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-20 border-b border-white/6 bg-navy-950/80 backdrop-blur-lg">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-4">
           <Link to="/" className="font-display text-xl italic text-white">Flofi</Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-platinum md:flex">
@@ -102,11 +100,6 @@ export default function Pricing() {
         <p className="mx-auto mt-4 max-w-3xl text-base text-platinum md:text-lg">
           Select the tier that aligns with your financial velocity.
         </p>
-        {authRequired && (
-          <div className="mx-auto mt-6 w-fit rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm text-primary">
-            Set <span className="font-semibold">flofi_token</span> in localStorage for live pricing.
-          </div>
-        )}
       </section>
 
       {/* Plans */}
@@ -150,7 +143,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-5xl h-px bg-white/[0.06]" />
+      <div className="mx-auto max-w-5xl h-px bg-white/6" />
 
       {/* FAQs */}
       <section className="mx-auto w-full max-w-3xl px-6 py-16">
@@ -197,7 +190,7 @@ export default function Pricing() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06]">
+      <footer className="border-t border-white/6">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-10 text-sm text-platinum md:flex-row md:items-center md:justify-between">
           <span className="font-display text-base italic text-white">Flofi</span>
           <div className="flex flex-wrap gap-4 text-xs">

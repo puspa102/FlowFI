@@ -1,71 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { getAuthToken, apiGet, apiPost } from '../api/client'
+import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { useGetAIPredictionsQuery, useGetAnomaliesQuery, useGetSpendingPatternsQuery, useChatWithAIMutation } from '@/store/api/insightsApi'
 
 type Message = {
   id: string
   type: 'user' | 'assistant'
   content: string
   timestamp: Date
-}
-
-type PredictionItem = {
-  categoryId: number
-  categoryName: string
-  limit: number
-  currentSpent: number
-  predictedSpent: number
-  alert: string
-  message: string
-}
-
-type InsightItem = {
-  type: string
-  title: string
-  body: string
-  severity: string
-}
-
-type AnomalyItem = {
-  id: number
-  description: string
-  category: string
-  amount: number
-  average: number
-  date: string
-  message: string
-}
-
-type RecommendationItem = {
-  title: string
-  body: string
-  savings: number
-}
-
-type AiResponse = {
-  expensePredictions: PredictionItem[]
-  spendingInsights: InsightItem[]
-  anomalies: AnomalyItem[]
-  savingRecommendations: RecommendationItem[]
-}
-
-const fallbackAiData: AiResponse = {
-  expensePredictions: [
-    { categoryId: 1, categoryName: 'Food & Groceries', limit: 800, currentSpent: 740, predictedSpent: 845.5, alert: 'WARNING', message: 'CAUTION: Projected $845.50 vs Limit $800.00.' },
-    { categoryId: 2, categoryName: 'Rent & Mortgage', limit: 2400, currentSpent: 2400, predictedSpent: 2400, alert: 'ON_TRACK', message: 'On pace for 100% of limit.' }
-  ],
-  spendingInsights: [
-    { type: 'weekend_pattern', title: 'Weekend Spend Spike', body: 'You spend 42% more on weekends. Average weekend: $112.50 vs $79.20 weekdays.', severity: 'medium' }
-  ],
-  anomalies: [
-    { id: 99, description: 'The Blue Lobster', category: 'Food & Groceries', amount: 245.50, average: 82.00, date: new Date().toISOString(), message: 'Anomaly: $245.50 at The Blue Lobster is over 2x your average ($82.00).' }
-  ],
-  savingRecommendations: [
-    { title: 'Consolidate Streaming', body: 'Subscriptions total $54.00/mo. Cancelling one could save $26.00/mo.', savings: 26.00 }
-  ]
 }
 
 function formatCurrency(value: number) {
@@ -77,26 +21,13 @@ export default function AIAssistant() {
     { id: '1', type: 'assistant', content: "Welcome to the FloFi AI Control Room. I've loaded your spending patterns, projections, and anomalies. Let's optimize your savings.", timestamp: new Date() },
   ])
   const [inputValue, setInputValue] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [aiData, setAiData] = useState<AiResponse | null>(null)
-  const [loadingAi, setLoadingAi] = useState(true)
+  const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const fetchPredictions = async () => {
-    try {
-      setLoadingAi(true)
-      const res = await apiGet<AiResponse>('/api/insights/ai-predictions')
-      if (res.ok && res.data) setAiData(res.data)
-      else setAiData(fallbackAiData)
-    } catch { setAiData(fallbackAiData) }
-    finally { setLoadingAi(false) }
-  }
-
-  useEffect(() => {
-    const token = getAuthToken()
-    if (!token) { window.location.href = '/login'; return }
-    fetchPredictions()
-  }, [])
+  const { data: aiData, isLoading: loadingAi, isError: aiError } = useGetAIPredictionsQuery(undefined)
+  const { data: anomalies } = useGetAnomaliesQuery(undefined)
+  const { data: patterns } = useGetSpendingPatternsQuery(undefined)
+  const [chatWithAI] = useChatWithAIMutation()
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
@@ -105,109 +36,113 @@ export default function AIAssistant() {
     const newMsg: Message = { id: Date.now().toString(), type: 'user', content: inputValue, timestamp: new Date() }
     setMessages(prev => [...prev, newMsg])
     setInputValue('')
-    setIsLoading(true)
+    setIsSending(true)
     try {
-      const response = await apiPost<Message>('/api/insights/chat', { message: inputValue })
-      if (response.ok && response.data) {
-        setMessages(prev => [...prev, { ...response.data!, timestamp: new Date(response.data!.timestamp) }])
-      } else {
-        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), type: 'assistant', content: 'Sorry, an error occurred. Please try again.', timestamp: new Date() }])
+      const history = messages.map(m => ({ type: m.type, content: m.content }))
+      const result = await chatWithAI({ message: inputValue, history }).unwrap()
+      if (result) {
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), type: 'assistant', content: result.content ?? result.reply ?? 'I understand. Let me help you with that.', timestamp: new Date() }])
       }
     } catch {
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), type: 'assistant', content: 'Connection error. Please try again.', timestamp: new Date() }])
-    } finally { setIsLoading(false) }
+      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), type: 'assistant', content: 'AI is temporarily unavailable. Please try again.', timestamp: new Date() }])
+    } finally { setIsSending(false) }
   }
 
-  const handleApplyRec = (recTitle: string, savings: number) => {
-    setMessages(prev => [...prev, { id: Date.now().toString(), type: 'assistant', content: `Optimization applied: "${recTitle}" scheduled. Projected savings: +${formatCurrency(savings)}/month.`, timestamp: new Date() }])
-  }
-
-  const activeAi = aiData ?? fallbackAiData
+  const predictions: any[] = aiData?.expensePredictions ?? []
+  const recommendations: any[] = aiData?.savingRecommendations ?? []
+  const insights: any[] = Array.isArray(patterns) ? patterns : (aiData?.spendingInsights ?? [])
+  const anomalyList: any[] = Array.isArray(anomalies) ? anomalies : (aiData?.anomalies ?? [])
 
   return (
     <DashboardLayout>
       <header>
-        <h1 className="font-display text-4xl italic text-white">AI Control Room</h1>
-        <p className="text-sm text-platinum mt-1">Real-time forecasts, pattern analysis, and anomaly detection.</p>
+        <h1 className="text-[26px] font-semibold" style={{ color: 'var(--foreground)' }}>AI Assistant</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Real-time forecasts, pattern analysis, and anomaly detection.</p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
         {/* Left: AI Panels */}
         <div className="space-y-5">
           {loadingAi ? (
-            <div className="flex flex-col items-center justify-center py-20 text-platinum space-y-4">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-              <p className="text-xs">Profiling cash ledger...</p>
+            <div className="space-y-4">
+              <Skeleton className="h-40" />
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+          ) : aiError ? (
+            <div className="rounded-[var(--radius-lg)] p-4" style={{ background: 'var(--warning-light)', border: '1px solid rgba(255,176,32,0.2)', color: 'var(--warning)' }}>
+              AI insights temporarily unavailable.
             </div>
           ) : (
             <>
-              {/* Projections */}
-              <div className="glass-card rounded-lg p-5">
-                <h2 className="text-sm font-semibold text-white mb-1">EOM Pacing Forecasts</h2>
-                <p className="text-xs text-platinum mb-4">Projected from real-time daily burn rate</p>
-                <div className="space-y-4">
-                  {activeAi.expensePredictions.map((pred, i) => {
-                    const pct = pred.limit > 0 ? Math.round((pred.predictedSpent / pred.limit) * 100) : 0
-                    const isOver = pred.predictedSpent > pred.limit
-                    return (
-                      <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }} className="space-y-1.5 border-b border-white/[0.04] pb-3 last:border-b-0 last:pb-0">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-white">{pred.categoryName}</span>
-                          <Badge className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border-0 ${isOver ? 'bg-coral/10 text-coral' : 'bg-primary/10 text-primary'}`}>
-                            {isOver ? 'Overspend Risk' : 'On Track'}
-                          </Badge>
-                        </div>
-                        <Progress value={Math.min(100, pct)} className="bg-white/[0.06] h-2 [&>div]:bg-primary" />
-                        <div className="flex justify-between text-[11px] text-platinum">
-                          <span>Spent: {formatCurrency(pred.currentSpent)}</span>
-                          <span>Projected: <span className={isOver ? 'text-coral' : 'text-white'}>{formatCurrency(pred.predictedSpent)}</span> / {formatCurrency(pred.limit)}</span>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
+              {predictions.length > 0 && (
+                <div className="rounded-[var(--radius-lg)] p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                  <h2 className="text-[15px] font-semibold mb-1" style={{ color: 'var(--foreground)' }}>EOM Pacing Forecasts</h2>
+                  <p className="text-xs mb-4" style={{ color: 'var(--muted-foreground)' }}>Projected from real-time burn rate</p>
+                  <div className="space-y-4">
+                    {predictions.map((pred: any, i: number) => {
+                      const pct = pred.limit > 0 ? Math.round((pred.predictedSpent / pred.limit) * 100) : 0
+                      const isOver = pred.predictedSpent > pred.limit
+                      return (
+                        <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }} className="space-y-1.5 pb-3 last:pb-0" style={{ borderBottom: i < predictions.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium" style={{ color: 'var(--foreground)' }}>{pred.categoryName}</span>
+                            <Badge className="rounded-full px-2 py-0.5 text-[10px] font-semibold border-0" style={{ background: isOver ? 'var(--danger-light)' : 'var(--primary-light)', color: isOver ? 'var(--danger)' : 'var(--primary)' }}>
+                              {isOver ? 'Overspend Risk' : 'On Track'}
+                            </Badge>
+                          </div>
+                          <div className="w-full rounded-full h-2" style={{ background: '#E2E8F0' }}>
+                            <div className="h-2 rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: isOver ? 'var(--danger)' : 'var(--primary)', transition: 'width 700ms cubic-bezier(0.4,0,0.2,1)' }} />
+                          </div>
+                          <div className="flex justify-between text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                            <span>Spent: {formatCurrency(pred.currentSpent)}</span>
+                            <span>Projected: <span style={{ color: isOver ? 'var(--danger)' : 'var(--foreground)' }}>{formatCurrency(pred.predictedSpent)}</span> / {formatCurrency(pred.limit)}</span>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Recommendations */}
-              <div className="glass-card rounded-lg p-5">
-                <h2 className="text-sm font-semibold text-white mb-3">Saving Recommendations</h2>
-                <div className="space-y-3">
-                  {activeAi.savingRecommendations.map((rec, i) => (
-                    <div key={i} className="p-3 rounded-md bg-white/[0.02] border border-white/[0.04] flex items-center justify-between gap-3">
-                      <div><p className="text-xs font-semibold text-white">{rec.title}</p><p className="text-[11px] text-platinum mt-0.5">{rec.body}</p></div>
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-bold text-primary">+{formatCurrency(rec.savings)}/mo</span>
-                        <button onClick={() => handleApplyRec(rec.title, rec.savings)} className="block mt-1 bg-primary hover:bg-primary-600 text-navy-950 font-semibold text-[10px] px-2.5 py-1 rounded-sm transition">Apply</button>
+              {recommendations.length > 0 && (
+                <div className="rounded-[var(--radius-lg)] p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                  <h2 className="text-[15px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Saving Recommendations</h2>
+                  <div className="space-y-3">
+                    {recommendations.map((rec: any, i: number) => (
+                      <div key={i} className="p-3 rounded-[var(--radius-sm)] flex items-center justify-between gap-3" style={{ background: 'var(--accent-light)', border: '1px solid rgba(124,111,224,0.1)' }}>
+                        <div><p className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>{rec.title}</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{rec.body}</p></div>
+                        <span className="text-xs font-bold shrink-0" style={{ color: 'var(--accent)' }}>+{formatCurrency(rec.savings)}/mo</span>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {insights.length > 0 && (
+                <div className="rounded-[var(--radius-lg)] p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                  <h2 className="text-[15px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Spending Patterns</h2>
+                  {insights.map((insight: any, i: number) => (
+                    <div key={i} className="p-3 rounded-[var(--radius-sm)] flex gap-3 items-start" style={{ background: 'var(--accent-light)', border: '1px solid rgba(124,111,224,0.1)' }}>
+                      <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs shrink-0" style={{ background: 'rgba(124,111,224,0.12)' }}>📊</div>
+                      <div><p className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>{insight.title}</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{insight.body}</p></div>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
 
-              {/* Insights */}
-              <div className="glass-card rounded-lg p-5">
-                <h2 className="text-sm font-semibold text-white mb-3">Spending Patterns</h2>
-                {activeAi.spendingInsights.map((insight, i) => (
-                  <div key={i} className="p-3 rounded-md bg-primary/5 border border-primary/10 flex gap-3 items-start">
-                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs shrink-0">📊</div>
-                    <div><p className="text-xs font-semibold text-primary">{insight.title}</p><p className="text-[11px] text-platinum mt-0.5">{insight.body}</p></div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Anomalies */}
-              {activeAi.anomalies.length > 0 && (
-                <div className="glass-card rounded-lg p-5">
-                  <h2 className="text-sm font-semibold text-white mb-3">Anomaly Radar</h2>
-                  {activeAi.anomalies.map((anom, i) => (
-                    <div key={i} className="p-3 rounded-md bg-coral/5 border border-coral/10 flex gap-3 items-start">
-                      <div className="h-7 w-7 rounded-full bg-coral/10 flex items-center justify-center text-xs shrink-0">🚨</div>
+              {anomalyList.length > 0 && (
+                <div className="rounded-[var(--radius-lg)] p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+                  <h2 className="text-[15px] font-semibold mb-3" style={{ color: 'var(--foreground)' }}>Anomaly Radar</h2>
+                  {anomalyList.map((anom: any, i: number) => (
+                    <div key={i} className="p-3 rounded-[var(--radius-sm)] flex gap-3 items-start" style={{ background: 'var(--danger-light)', border: '1px solid rgba(255,107,107,0.1)' }}>
+                      <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs shrink-0" style={{ background: 'rgba(255,107,107,0.1)' }}>🚨</div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-xs font-semibold text-coral">{anom.description}</p>
-                          <Badge className="bg-coral/10 text-coral border-0 text-[9px] px-1 py-0.5 rounded">Anomaly</Badge>
+                          <p className="text-xs font-semibold" style={{ color: 'var(--danger)' }}>{anom.description}</p>
+                          <Badge className="border-0 text-[9px] px-1 py-0.5 rounded" style={{ background: 'rgba(255,107,107,0.1)', color: 'var(--danger)' }}>Anomaly</Badge>
                         </div>
-                        <p className="text-[11px] text-platinum mt-0.5">{anom.message}</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{anom.message}</p>
                       </div>
                     </div>
                   ))}
@@ -218,13 +153,13 @@ export default function AIAssistant() {
         </div>
 
         {/* Right: Chat */}
-        <div className="glass-card rounded-lg flex flex-col max-h-[80vh] lg:max-h-[calc(100vh-12rem)]">
-          <div className="border-b border-white/[0.06] px-5 py-4 flex items-center justify-between shrink-0">
+        <div className="rounded-[var(--radius-lg)] flex flex-col max-h-[80vh] lg:max-h-[calc(100vh-12rem)]" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
+          <div className="px-5 py-4 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
             <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
-              <p className="text-sm font-semibold text-white">FloFi Wealth Assistant</p>
+              <div className="h-2.5 w-2.5 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
+              <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>FloFi Wealth Assistant</p>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-widest text-platinum bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded">V2</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded" style={{ color: 'var(--muted-foreground)', background: 'var(--surface-sunken)', border: '1px solid var(--border)' }}>V2</span>
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
@@ -235,24 +170,30 @@ export default function AIAssistant() {
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-[85%] p-3.5 rounded-lg ${message.type === 'user' ? 'bg-primary text-navy-950 rounded-tr-none' : 'bg-white/[0.04] text-white border border-white/[0.06] rounded-tl-none'}`}>
+                <div className="max-w-[85%] p-3.5 rounded-[var(--radius-md)]" style={{
+                  background: message.type === 'user' ? 'var(--accent)' : 'var(--surface-sunken)',
+                  color: message.type === 'user' ? '#fff' : 'var(--foreground)',
+                  border: message.type === 'user' ? 'none' : '1px solid var(--border)',
+                  borderTopRightRadius: message.type === 'user' ? 0 : undefined,
+                  borderTopLeftRadius: message.type === 'assistant' ? 0 : undefined,
+                }}>
                   <p className="text-xs leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 </div>
               </motion.div>
             ))}
-            {isLoading && (
+            {isSending && (
               <div className="flex justify-start">
-                <div className="rounded-lg bg-white/[0.04] border border-white/[0.06] p-3 flex gap-2">
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.15s' }} />
-                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.3s' }} />
+                <div className="rounded-[var(--radius-md)] p-3 flex gap-2" style={{ background: 'var(--surface-sunken)', border: '1px solid var(--border)' }}>
+                  <div className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)' }} />
+                  <div className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '0.15s' }} />
+                  <div className="h-1.5 w-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: '0.3s' }} />
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-white/[0.06] px-5 py-4 shrink-0">
+          <div className="px-5 py-4 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -260,12 +201,14 @@ export default function AIAssistant() {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }}
                 placeholder="Ask about spending patterns..."
-                className="flex-1 rounded-md border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-xs text-white placeholder-platinum/50 focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+                className="flex-1 rounded-[var(--radius-xl)] px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition"
+                style={{ background: 'var(--surface-sunken)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
               />
               <button
                 onClick={handleSendMessage}
-                disabled={isLoading || !inputValue.trim()}
-                className="rounded-md bg-primary px-4 py-2 text-navy-950 font-semibold text-xs hover:bg-primary-600 transition disabled:opacity-50 shrink-0"
+                disabled={isSending || !inputValue.trim()}
+                className="rounded-[var(--radius-sm)] px-4 py-2 font-semibold text-xs text-white transition disabled:opacity-50 shrink-0"
+                style={{ background: 'var(--accent)' }}
               >
                 Send
               </button>
