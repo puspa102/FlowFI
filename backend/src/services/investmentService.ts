@@ -55,7 +55,7 @@ export async function createInvestment(
       allocation: data.allocation,
     },
   })
-  
+
   return {
     ...investment,
     quantity: investment.quantity.toNumber(),
@@ -80,7 +80,7 @@ export async function updateInvestment(
       lastUpdated: new Date(),
     },
   })
-  
+
   return {
     ...investment,
     quantity: investment.quantity.toNumber(),

@@ -26,6 +26,7 @@ export default function requireAuth(req: Request, res: Response, next: NextFunct
     if (!payload?.userId) {
       return res.status(401).json({ error: 'Invalid token.' })
     }
+    ;(req as any).userId = payload.userId
     ;(req as AuthenticatedRequest).user = { id: payload.userId }
     return next()
   } catch (error) {

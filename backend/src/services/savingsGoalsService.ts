@@ -39,7 +39,7 @@ export async function createSavingsGoal(
       statusLabel: 'On Track',
     },
   })
-  
+
   return {
     ...goal,
     targetAmount: goal.targetAmount.toNumber(),
@@ -73,7 +73,7 @@ export async function updateSavingsGoal(
       statusLabel: progressPercent >= 100 ? 'Achieved' : 'On Track',
     },
   })
-  
+
   return {
     ...updatedGoal,
     targetAmount: updatedGoal.targetAmount.toNumber(),

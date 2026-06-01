@@ -6,7 +6,7 @@ export async function getSubscriptions(userId: number) {
     where: { userId },
     orderBy: { createdAt: 'desc' },
   })
-  
+
   return subscriptions.map((s) => ({
     ...s,
     monthlyPrice: s.monthlyPrice.toNumber(),
@@ -61,16 +61,13 @@ export async function getSubscriptionStats(userId: number) {
   const subscriptions = await getSubscriptions(userId)
 
   const activeSubscriptions = subscriptions.filter((s) => s.status === 'ACTIVE')
-  const monthlyBurnRate = activeSubscriptions.reduce((sum, s) => sum.plus(s.monthlyPrice), new Decimal(0))
+  const monthlyBurnRate = activeSubscriptions.reduce((sum, s) => sum + s.monthlyPrice, 0)
 
   return {
     totalSubscriptions: subscriptions.length,
     activeSubscriptions: activeSubscriptions.length,
-    monthlyBurnRate: monthlyBurnRate.toNumber(),
-    subscriptions: subscriptions.map((s) => ({
-      ...s,
-      monthlyPrice: s.monthlyPrice.toNumber(),
-    })),
+    monthlyBurnRate,
+    subscriptions,
   }
 }
 

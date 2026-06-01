@@ -6,7 +6,7 @@ export async function getBankConnections(userId: number) {
     where: { userId },
     orderBy: { lastSynced: 'desc' },
   })
-  
+
   return connections.map((c) => ({
     ...c,
     balance: c.balance.toNumber(),

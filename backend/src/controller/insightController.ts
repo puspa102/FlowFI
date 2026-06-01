@@ -52,3 +52,33 @@ export async function smartCategorizeHandler(req: AuthenticatedRequest, res: Res
   }
 }
 
+export async function getBudgetSuggestionsHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const data = await getAiPredictions(req.user.id)
+    return res.status(200).json(data.savingRecommendations)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export async function getAnomaliesHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const data = await getAiPredictions(req.user.id)
+    return res.status(200).json(data.anomalies)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export async function getSpendingPatternsHandler(req: AuthenticatedRequest, res: Response) {
+  try {
+    const data = await getAiPredictions(req.user.id)
+    return res.status(200).json(data.spendingInsights)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
