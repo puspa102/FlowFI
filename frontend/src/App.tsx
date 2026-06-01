@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import Skeleton from './components/ui/Skeleton'
+import { ProtectedRoute } from './components/auth/ProtectedRoute'
 
 const Home = lazy(() => import('./pages/Home'))
 const Pricing = lazy(() => import('./pages/Pricing'))
@@ -20,7 +21,7 @@ const SavingsGoals = lazy(() => import('./pages/SavingsGoals'))
 
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-navy-950 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
       <div className="space-y-4 w-full max-w-md px-8">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-72" />
@@ -37,20 +38,23 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Suspense fallback={<PageLoader />}>
         <Routes location={location} key={location.pathname}>
+          {/* Public routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/transactions" element={<Transactions />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/budgets" element={<Budgets />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/ai-assistant" element={<AIAssistant />} />
-          <Route path="/investments" element={<Investments />} />
-          <Route path="/family" element={<Family />} />
-          <Route path="/subscriptions" element={<Subscriptions />} />
-          <Route path="/bank-accounts" element={<BankAccounts />} />
-          <Route path="/savings-goals" element={<SavingsGoals />} />
+
+          {/* Protected routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+          <Route path="/budgets" element={<ProtectedRoute><Budgets /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
+          <Route path="/investments" element={<ProtectedRoute><Investments /></ProtectedRoute>} />
+          <Route path="/family" element={<ProtectedRoute><Family /></ProtectedRoute>} />
+          <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+          <Route path="/bank-accounts" element={<ProtectedRoute><BankAccounts /></ProtectedRoute>} />
+          <Route path="/savings-goals" element={<ProtectedRoute><SavingsGoals /></ProtectedRoute>} />
         </Routes>
       </Suspense>
     </AnimatePresence>
