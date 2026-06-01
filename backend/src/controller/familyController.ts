@@ -85,3 +85,64 @@ export async function getFamilyStats(req: Request, res: Response) {
     res.status(500).json({ error: 'Failed to fetch family stats' })
   }
 }
+
+export async function getFamilyMembers(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const groups = await familyService.getFamilyGroups(userId)
+    if (groups.length === 0) {
+      return res.json([])
+    }
+    const members = await familyService.getFamilyMembers(groups[0].id)
+    res.json(members)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch family members' })
+  }
+}
+
+export async function getFamilyBudgetsDefault(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const groups = await familyService.getFamilyGroups(userId)
+    if (groups.length === 0) {
+      return res.json([])
+    }
+    const budgets = await familyService.getFamilyBudgets(userId, groups[0].id)
+    res.json(budgets)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch family budgets' })
+  }
+}
+
+export async function createFamilyBudgetDefault(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const groups = await familyService.getFamilyGroups(userId)
+    if (groups.length === 0) {
+      return res.status(400).json({ error: 'No family group found' })
+    }
+    const { category, month, budgetAmount } = req.body
+    const budget = await familyService.createFamilyBudget(userId, groups[0].id, {
+      category,
+      month,
+      budgetAmount,
+    })
+    res.status(201).json(budget)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create family budget' })
+  }
+}
+
+export async function getFamilyStatsDefault(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const groups = await familyService.getFamilyGroups(userId)
+    if (groups.length === 0) {
+      return res.json({ familyId: null, totalMembers: 0, totalBudgets: 0, totalBudgeted: 0, totalSpent: 0, remainingBudget: 0, percentUsed: 0 })
+    }
+    const stats = await familyService.getFamilyStats(userId, groups[0].id)
+    res.json(stats)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch family stats' })
+  }
+}

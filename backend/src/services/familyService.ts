@@ -12,6 +12,12 @@ export async function getFamilyGroups(userId: number) {
   return familyMembers.map((m) => m.family)
 }
 
+export async function getFamilyMembers(familyId: number) {
+  return prisma.familyMember.findMany({
+    where: { familyId },
+  })
+}
+
 export async function createFamilyGroup(userId: number, name: string) {
   return prisma.familyGroup.create({
     data: {
@@ -75,7 +81,7 @@ export async function createFamilyBudget(
       percentUsed: 0,
     },
   })
-  
+
   return {
     ...budget,
     budgetAmount: budget.budgetAmount.toNumber(),
@@ -101,7 +107,7 @@ export async function updateFamilyBudgetSpending(userId: number, budgetId: numbe
       percentUsed: Math.min(100, percentUsed),
     },
   })
-  
+
   return {
     ...updatedBudget,
     budgetAmount: updatedBudget.budgetAmount.toNumber(),
