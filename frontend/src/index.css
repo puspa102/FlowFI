@@ -1,28 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import './styles/tokens.css';
 @import 'tailwindcss';
 
 @layer base {
   :root {
-    --background: 222 47% 5%;
-    --foreground: 0 0% 100%;
-    --card: 220 26% 10%;
-    --card-foreground: 0 0% 100%;
-    --popover: 220 26% 10%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 166 100% 42%;
-    --primary-foreground: 222 47% 5%;
-    --secondary: 220 26% 14%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 166 100% 42%;
-    --accent-foreground: 222 47% 5%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 18%;
-    --input: 220 20% 18%;
-    --ring: 166 100% 42%;
     --radius: 16px;
   }
 
@@ -35,68 +16,71 @@
   }
 
   body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
     min-height: 100vh;
-    background: #0A0F1E;
-    color: #FFFFFF;
+    background: var(--background);
+    color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[data-theme-mode='dark'] body {
+    color-scheme: dark;
+  }
+
+  html[data-theme-mode='light'] body {
+    color-scheme: light;
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: 'Instrument Serif', Georgia, serif;
+    font-family: 'Geist', system-ui, sans-serif;
   }
 
   .font-body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card);
   }
 
   .glass-dark {
-    background: rgba(10, 15, 35, 0.7);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--sidebar-bg);
+    border: 1px solid rgba(255,255,255,0.07);
   }
 
   .glass-light {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: var(--card);
+    border: 1px solid var(--border);
   }
 
   .glass-navy {
-    background: rgba(8, 14, 44, 0.82);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(99, 179, 237, 0.12);
+    background: #1A2B3C;
+    border: 1px solid rgba(0,201,167,0.12);
   }
 
   .gradient-text-teal {
-    background: linear-gradient(135deg, #00D4AA 0%, #00b894 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-text-blue {
-    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .glow-teal {
-    box-shadow: 0 0 40px rgba(0, 212, 170, 0.25), 0 0 80px rgba(0, 212, 170, 0.1);
+    box-shadow: 0 0 40px rgba(0,201,167,0.25), 0 0 80px rgba(0,201,167,0.1);
   }
 
   .border-gradient-teal {
@@ -111,7 +95,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, #00D4AA, #0A0F1E, #00D4AA);
+    background: linear-gradient(135deg, var(--primary), #1A2B3C, var(--primary));
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     -webkit-mask-composite: xor;
@@ -119,7 +103,7 @@
   }
 
   .shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    background: linear-gradient(90deg, transparent, rgba(0,201,167,0.04), transparent);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
@@ -139,13 +123,13 @@
   }
 
   .grid-pattern {
-    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(26,43,60,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,43,60,0.03) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 
   .dot-pattern {
-    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(26,43,60,0.08) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 }
@@ -166,8 +150,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.6), 0 0 80px rgba(0, 212, 170, 0.2); }
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 201, 167, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(0, 201, 167, 0.6), 0 0 80px rgba(0, 201, 167, 0.2); }
 }
 
 @keyframes orbit {
