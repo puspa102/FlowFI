@@ -1,5 +1,4 @@
 import prisma from '../config/prisma'
-import { ensureBudgetData } from './demoDataService'
 import { buildMonthStart } from '../utils/finance'
 
 export async function recalculateBudgets(userId: number, monthStart: Date) {
@@ -50,8 +49,6 @@ export async function recalculateBudgets(userId: number, monthStart: Date) {
 }
 
 export async function fetchBudgetSummary(userId: number, month?: string) {
-  await ensureBudgetData(userId)
-
   const monthDate = month ? new Date(month) : new Date()
   const monthStart = buildMonthStart(monthDate)
 

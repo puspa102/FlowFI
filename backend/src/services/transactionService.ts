@@ -1,6 +1,5 @@
 import prisma from '../config/prisma'
 import { Prisma } from '../generated/prisma'
-import { ensureDemoData } from './demoDataService'
 import { toSignedAmount } from '../utils/finance'
 
 type TransactionQuery = {
@@ -73,7 +72,7 @@ export async function processRecurringTransactions(userId: number) {
         }
       })
       if (!otherOverdue) break
-      
+
       // If we got here, there are no overdue ones we can easily identify, let's break to avoid loop
       break
     }
@@ -106,7 +105,6 @@ export async function processRecurringTransactions(userId: number) {
 }
 
 export async function getTransactions(userId: number, query: TransactionQuery) {
-  await ensureDemoData(userId)
   await processRecurringTransactions(userId)
 
   const page = Math.max(1, Number(query.page ?? 1))
@@ -206,8 +204,8 @@ export async function addTransaction(userId: number, input: TransactionInput) {
 
   // Auto adjusting balance based on transaction type
   const actualAmount = amount < 0 ? Math.abs(amount) : amount
-  const newBalance = type === 'INCOME' 
-    ? Number(account.balance) + actualAmount 
+  const newBalance = type === 'INCOME'
+    ? Number(account.balance) + actualAmount
     : Number(account.balance) - actualAmount
 
   await prisma.account.update({
@@ -263,7 +261,7 @@ export async function updateTransaction(userId: number, transactionId: number, i
   }
 
   const updateData: Prisma.TransactionUpdateInput = {}
-  
+
   if (input.description !== undefined) updateData.description = input.description.trim()
   if (input.merchant !== undefined) updateData.merchant = input.merchant.trim()
   if (input.category !== undefined) updateData.category = input.category

@@ -1,14 +1,12 @@
 import express from 'express'
 import prisma from '../config/prisma'
-import { ensureBudgetData } from '../services/demoDataService'
 import type { AuthenticatedRequest } from '../middleware/requireAuth'
 
 const router = express.Router()
 
-router.get('/', async (req: AuthenticatedRequest, res) => {
+router.get('/', async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const userId = req.user.id
-    await ensureBudgetData(userId)
 
     const customCategories = await prisma.budgetCategory.findMany({
       where: { userId },
@@ -30,13 +28,14 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
   }
 })
 
-router.post('/', async (req: AuthenticatedRequest, res) => {
+router.post('/', async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const userId = req.user.id
     const { name, icon, tone } = req.body
 
     if (!name) {
-      return res.status(400).json({ error: 'Category name is required.' })
+      res.status(400).json({ error: 'Category name is required.' })
+      return
     }
 
     const newCategory = await prisma.budgetCategory.create({
@@ -63,13 +62,14 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
   }
 })
 
-router.delete('/:id', async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const userId = req.user.id
     const id = Number(req.params.id)
 
     if (Number.isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid category ID.' })
+      res.status(400).json({ error: 'Invalid category ID.' })
+      return
     }
 
     const category = await prisma.budgetCategory.findFirst({
@@ -77,7 +77,8 @@ router.delete('/:id', async (req: AuthenticatedRequest, res) => {
     })
 
     if (!category) {
-      return res.status(404).json({ error: 'Category not found.' })
+      res.status(404).json({ error: 'Category not found.' })
+      return
     }
 
     // Delete budgets associated with this category

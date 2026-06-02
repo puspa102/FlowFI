@@ -1,9 +1,6 @@
 import prisma from '../config/prisma'
-import { ensurePricingData } from './demoDataService'
 
 export async function fetchPricing() {
-  await ensurePricingData()
-
   const [plans, faqs, logos, cta] = await Promise.all([
     prisma.pricingPlan.findMany({ orderBy: { order: 'asc' } }),
     prisma.pricingFaq.findMany({ orderBy: { order: 'asc' } }),
