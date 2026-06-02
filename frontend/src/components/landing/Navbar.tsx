@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Zap } from 'lucide-react'
+import { Menu, Moon, SunMedium, X } from 'lucide-react'
+import Logo from '@/components/ui/Logo'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -14,6 +16,11 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { mode, setMode } = useTheme()
+
+  const toggleTheme = () => {
+    setMode(mode === 'light' ? 'dark' : 'light')
+  }
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 24)
@@ -35,14 +42,8 @@ export default function Navbar() {
       >
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 shadow-lg group-hover:shadow-cyan-400/40 transition-all duration-300">
-              <Zap className="h-4 w-4 text-white" fill="white" />
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 opacity-0 blur-md group-hover:opacity-60 transition-opacity duration-300" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white">
-              Flo<span className="gradient-text-cyan">fi</span>
-            </span>
+          <Link to="/">
+            <Logo size={28} textClassName="text-xl font-bold tracking-tight" textColorClass="text-white" />
           </Link>
 
           {/* Desktop nav */}
@@ -60,6 +61,15 @@ export default function Navbar() {
 
           {/* CTA buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+            >
+              {mode === 'light' ? <Moon className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}
+            </button>
             <Link
               to="/login"
               className="text-sm font-medium text-white/70 hover:text-white transition-colors duration-200 px-4 py-2"
@@ -106,6 +116,14 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center justify-center gap-2 text-sm font-medium text-white/70 hover:text-white py-2.5 rounded-xl border border-white/10"
+            >
+              {mode === 'light' ? <Moon className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}
+              {mode === 'light' ? 'Dark mode' : 'Light mode'}
+            </button>
             <div className="flex flex-col gap-3 pt-2">
               <Link
                 to="/login"

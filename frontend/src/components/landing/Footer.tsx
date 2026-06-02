@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Zap, Code, Globe2, Share2 } from 'lucide-react'
+import { Code, Globe2, Share2 } from 'lucide-react'
+import Logo from '@/components/ui/Logo'
 
 const footerLinks = {
   Product: [
@@ -43,13 +44,8 @@ export default function Footer() {
           {/* Brand column */}
           <div className="col-span-2">
             {/* Logo */}
-            <Link to="/" className="inline-flex items-center gap-2.5 mb-5 group">
-              <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-emerald-400 shadow-lg group-hover:shadow-cyan-400/40 transition-all duration-300">
-                <Zap className="h-4 w-4 text-white" fill="white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">
-                Flo<span className="gradient-text-cyan">fi</span>
-              </span>
+            <Link to="/" className="mb-5 block">
+              <Logo size={28} textClassName="text-xl font-bold tracking-tight" textColorClass="text-white" />
             </Link>
 
             <p className="text-sm text-white/40 leading-relaxed max-w-xs mb-6">

@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -8,14 +7,12 @@ import {
   Landmark,
   TrendingUp,
   Target,
-  Users,
   Bot,
-  CreditCard,
-  Settings,
   LogOut,
-  Wallet,
+  User,
 } from 'lucide-react'
 import { clearToken } from '@/store/slices/authSlice'
+import Logo from '@/components/ui/Logo'
 
 const navItems = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
@@ -24,7 +21,8 @@ const navItems = [
   { label: 'Bank Accounts', to: '/bank-accounts', icon: Landmark },
   { label: 'Investments', to: '/investments', icon: TrendingUp },
   { label: 'Savings Goals', to: '/savings-goals', icon: Target },
-  { label: 'AI Assistant', to: '/ai-assistant', icon: Bot, isAI: true },
+  { label: 'AI Assistant', to: '/ai-assistant', icon: Bot },
+  { label: 'Profile', to: '/profile', icon: User },
 ]
 
 export default function Sidebar() {
@@ -38,33 +36,18 @@ export default function Sidebar() {
   }
 
   return (
-    <motion.aside
-      key={`sidebar-${location.pathname}`}
-      className="h-full overflow-y-auto flex flex-col w-[260px] py-6 bg-[--sidebar-bg] border-r border-[rgba(114,120,119,0.15)]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
-    >
+    <aside className="h-full overflow-y-auto flex flex-col w-[260px] py-6 bg-[--sidebar-bg] border-r border-[rgba(114,120,119,0.15)]">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 pb-8">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ background: 'var(--primary)' }}
-        >
-          <Wallet className="text-white bg-white/20 p-1.5 rounded-lg" size={24} />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-lg font-bold font-display tracking-tight text-[--foreground]">FloFi</span>
-          <span className="text-[9px] font-bold tracking-widest text-[#727877] uppercase uppercase mt-[-2px]">WEALTH INTELLIGENCE</span>
-        </div>
+      <div className="px-6 pb-8 flex flex-col gap-1">
+        <Logo size={32} textClassName="text-xl font-bold font-display tracking-tight text-[--foreground]" />
+        <span className="text-[9px] font-bold tracking-widest text-[#727877] uppercase px-0.5">WEALTH INTELLIGENCE</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1.5 px-3">
-        {navItems.map((item, i) => {
+        {navItems.map((item) => {
           const isActive = location.pathname === item.to
           const Icon = item.icon
-          const isAI = item.isAI
 
           const defaultColor = 'var(--muted-foreground)'
           const hoverColor = 'var(--foreground)'
@@ -73,12 +56,7 @@ export default function Sidebar() {
           const activeBorder = 'var(--info)'
 
           return (
-            <motion.div
-              key={item.to}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.03 * i, duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
+            <div key={item.to}>
               <Link
                 to={item.to}
                 className={`group relative flex items-center gap-3 px-4 py-3 text-[14px] font-medium transition-all duration-200 rounded-xl ${isActive ? 'font-semibold' : ''}`}
@@ -101,23 +79,21 @@ export default function Sidebar() {
               >
                 <Icon
                   size={20}
-                  className={isActive ? "text-[--info]" : "text-[--muted-foreground] group-hover:text-[--foreground]"}
+                  className={isActive ? 'text-[--info]' : 'text-[--muted-foreground] group-hover:text-[--foreground]'}
                   style={{ transition: 'color 150ms ease' }}
                 />
                 <span className="flex-1 tracking-tight">
                   {item.label}
                 </span>
-                
+
                 {isActive && (
-                  <motion.span
-                    layoutId="sidebar-active"
+                  <span
                     className="absolute right-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-full"
                     style={{ background: activeBorder }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
               </Link>
-            </motion.div>
+            </div>
           )
         })}
       </nav>
@@ -127,6 +103,8 @@ export default function Sidebar() {
         <p className="text-[10px] font-bold text-[#727877] tracking-wider uppercase mb-2">PRO PLAN</p>
         <p className="text-[13px] font-medium text-[--foreground] mb-4 leading-snug">Unlock predictive wealth modeling.</p>
         <button
+          type="button"
+          onClick={() => navigate('/pricing')}
           className="w-full rounded-xl py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-[--primary-hover]"
           style={{ background: 'var(--primary)' }}
         >
@@ -144,6 +122,6 @@ export default function Sidebar() {
           Logout
         </button>
       </div>
-    </motion.aside>
+    </aside>
   )
 }

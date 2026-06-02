@@ -131,7 +131,7 @@ export default function TestimonialsSection() {
               className="glass-dark rounded-3xl border border-white/[0.08] p-8 md:p-10"
             >
               {/* Quote mark */}
-              <div className="text-5xl text-cyan-500/30 font-serif leading-none mb-4">"</div>
+              <div className="text-5xl  text-cyan-500/30 font-serif leading-none mb-4">"</div>
 
               {/* Text */}
               <p className="text-base md:text-lg text-white/80 leading-relaxed mb-6">
