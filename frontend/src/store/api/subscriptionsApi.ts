@@ -3,7 +3,7 @@ import { flofiApi } from './flofiApi'
 export const subscriptionsApi = flofiApi.injectEndpoints({
   endpoints: (build) => ({
     getSubscriptions: build.query({
-      query: () => '/api/subscriptions',
+      query: () => '/api/subscriptions/stats',
       providesTags: ['Subscriptions'],
     }),
     addSubscription: build.mutation({

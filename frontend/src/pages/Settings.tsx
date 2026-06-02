@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import ThemeCustomizer from '@/components/settings/ThemeCustomizer'
 import { useGetProfileQuery, useUpdateSettingsMutation } from '@/store/api/profileApi'
 
 type UserSettings = {
@@ -120,8 +119,6 @@ export default function Settings() {
       </header>
 
       <div className="space-y-8">
-        <ThemeCustomizer />
-
         <div className="grid gap-8 xl:grid-cols-[1.5fr_0.75fr]">
           <div className="space-y-6">
             <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-[var(--radius-lg)] p-6" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>

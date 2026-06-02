@@ -15,8 +15,6 @@ import {
   Archive,
   X,
   Check,
-  ArrowUpRight,
-  ArrowDownLeft,
 } from 'lucide-react'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
