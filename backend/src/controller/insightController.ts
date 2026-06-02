@@ -2,83 +2,85 @@ import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/requireAuth'
 import { getInsights, aiChat, getAiPredictions, suggestCategory } from '../services/insightService'
 
-export async function listInsights(req: AuthenticatedRequest, res: Response) {
+export async function listInsights(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const insights = await getInsights(req.user.id)
-    return res.status(200).json({ insights })
+    res.status(200).json({ insights })
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function chatWithAI(req: AuthenticatedRequest, res: Response) {
+export async function chatWithAI(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { message } = req.body
 
     if (!message || typeof message !== 'string' || !message.trim()) {
-      return res.status(400).json({ error: 'Message is required.' })
+      res.status(400).json({ error: 'Message is required.' })
+      return
     }
 
     const response = await aiChat(req.user.id, message)
-    return res.status(200).json(response)
+    res.status(200).json(response)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function getAiPredictionsHandler(req: AuthenticatedRequest, res: Response) {
+export async function getAiPredictionsHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const predictions = await getAiPredictions(req.user.id)
-    return res.status(200).json(predictions)
+    res.status(200).json(predictions)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function smartCategorizeHandler(req: AuthenticatedRequest, res: Response) {
+export async function smartCategorizeHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { description } = req.query
     if (typeof description !== 'string') {
-      return res.status(400).json({ error: 'Description query parameter is required.' })
+      res.status(400).json({ error: 'Description query parameter is required.' })
+      return
     }
     const category = suggestCategory(description)
-    return res.status(200).json({ category })
+    res.status(200).json({ category })
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function getBudgetSuggestionsHandler(req: AuthenticatedRequest, res: Response) {
+export async function getBudgetSuggestionsHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const data = await getAiPredictions(req.user.id)
-    return res.status(200).json(data.savingRecommendations)
+    res.status(200).json(data.savingRecommendations)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function getAnomaliesHandler(req: AuthenticatedRequest, res: Response) {
+export async function getAnomaliesHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const data = await getAiPredictions(req.user.id)
-    return res.status(200).json(data.anomalies)
+    res.status(200).json(data.anomalies)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
-export async function getSpendingPatternsHandler(req: AuthenticatedRequest, res: Response) {
+export async function getSpendingPatternsHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const data = await getAiPredictions(req.user.id)
-    return res.status(200).json(data.spendingInsights)
+    res.status(200).json(data.spendingInsights)
   } catch (error) {
     console.error(error)
-    return res.status(500).json({ error: 'Internal server error.' })
+    res.status(500).json({ error: 'Internal server error.' })
   }
 }
 
