@@ -19,16 +19,17 @@ export async function createBankConnection(
     accountName: string
     accountType: string
     balance: number
-    maskedAccountNumber: string
+    maskedAccountNumber?: string
   }
 ) {
+  const masked = data.maskedAccountNumber || `****${Math.floor(1000 + Math.random() * 9000)}`
   return prisma.bankConnection.create({
     data: {
       userId,
       accountName: data.accountName,
       accountType: data.accountType,
       balance: new Decimal(data.balance),
-      maskedAccountNumber: data.maskedAccountNumber,
+      maskedAccountNumber: masked,
       lastSynced: new Date(),
       syncStatus: 'SYNCED',
     },
