@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma'
+import type { Prisma, SubscriptionStatus } from '../generated/prisma'
 import { Decimal } from '@prisma/client/runtime/library'
 
 export async function getSubscriptions(userId: number) {
@@ -40,14 +41,16 @@ export async function updateSubscription(
   subscriptionId: number,
   data: { name?: string; status?: string; monthlyPrice?: number; category?: string }
 ) {
+  const updateData: Prisma.SubscriptionUpdateInput = {
+    ...(data.name && { name: data.name }),
+    ...(data.status && { status: data.status as SubscriptionStatus }),
+    ...(data.monthlyPrice !== undefined && { monthlyPrice: new Decimal(data.monthlyPrice) }),
+    ...(data.category && { category: data.category }),
+  }
+
   return prisma.subscription.update({
     where: { id: subscriptionId },
-    data: {
-      ...(data.name && { name: data.name }),
-      ...(data.status && { status: data.status }),
-      ...(data.monthlyPrice !== undefined && { monthlyPrice: new Decimal(data.monthlyPrice) }),
-      ...(data.category && { category: data.category }),
-    },
+    data: updateData,
   })
 }
 

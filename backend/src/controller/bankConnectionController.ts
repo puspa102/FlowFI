@@ -32,7 +32,7 @@ export async function updateBankConnection(req: Request, res: Response) {
     const userId = (req as any).userId
     const { id } = req.params
     const { balance, syncStatus } = req.body
-    const connection = await bankService.updateBankConnection(userId, parseInt(id), {
+    const connection = await bankService.updateBankConnection(userId, Number(id), {
       balance,
       syncStatus,
     })
@@ -46,7 +46,7 @@ export async function removeBankConnection(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { id } = req.params
-    await bankService.deleteBankConnection(userId, parseInt(id))
+    await bankService.deleteBankConnection(userId, Number(id))
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to remove bank connection' })

@@ -41,7 +41,7 @@ export async function getFamilyBudgets(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { familyId } = req.params
-    const budgets = await familyService.getFamilyBudgets(userId, parseInt(familyId))
+    const budgets = await familyService.getFamilyBudgets(userId, Number(familyId))
     res.json(budgets)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch family budgets' })
@@ -68,7 +68,7 @@ export async function updateFamilyBudgetSpending(req: Request, res: Response) {
     const userId = (req as any).userId
     const { budgetId } = req.params
     const { spentAmount } = req.body
-    const budget = await familyService.updateFamilyBudgetSpending(userId, parseInt(budgetId), spentAmount)
+    const budget = await familyService.updateFamilyBudgetSpending(userId, Number(budgetId), spentAmount)
     res.json(budget)
   } catch (error) {
     res.status(500).json({ error: 'Failed to update budget spending' })
@@ -79,7 +79,7 @@ export async function getFamilyStats(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { familyId } = req.params
-    const stats = await familyService.getFamilyStats(userId, parseInt(familyId))
+    const stats = await familyService.getFamilyStats(userId, Number(familyId))
     res.json(stats)
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch family stats' })

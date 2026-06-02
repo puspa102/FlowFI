@@ -35,7 +35,7 @@ export async function updateInvestment(req: Request, res: Response) {
     const userId = (req as any).userId
     const { id } = req.params
     const { currentPrice, quantity, allocation } = req.body
-    const investment = await investmentService.updateInvestment(userId, parseInt(id), {
+    const investment = await investmentService.updateInvestment(userId, Number(id), {
       currentPrice,
       quantity,
       allocation,
@@ -50,7 +50,7 @@ export async function deleteInvestment(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { id } = req.params
-    await investmentService.deleteInvestment(userId, parseInt(id))
+    await investmentService.deleteInvestment(userId, Number(id))
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete investment' })

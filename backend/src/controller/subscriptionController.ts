@@ -33,7 +33,7 @@ export async function updateSubscription(req: Request, res: Response) {
     const userId = (req as any).userId
     const { id } = req.params
     const { name, status, monthlyPrice, category } = req.body
-    const subscription = await subscriptionService.updateSubscription(userId, parseInt(id), {
+    const subscription = await subscriptionService.updateSubscription(userId, Number(id), {
       name,
       status,
       monthlyPrice,
@@ -49,7 +49,7 @@ export async function deleteSubscription(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { id } = req.params
-    await subscriptionService.deleteSubscription(userId, parseInt(id))
+    await subscriptionService.deleteSubscription(userId, Number(id))
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete subscription' })
