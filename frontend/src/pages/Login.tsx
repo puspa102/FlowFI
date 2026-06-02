@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Settings2 } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { apiPost } from '../api/client'
+import Logo from '@/components/ui/Logo'
+import { apiPost, getApiBase } from '../api/client'
 import { setToken } from '@/store/slices/authSlice'
 
 type LoginResponse = {
@@ -20,8 +20,16 @@ export default function Login() {
   const dispatch = useDispatch()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(() => new URLSearchParams(window.location.search).get('error'))
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function handleGoogleLogin() {
+    setError(null)
+    window.history.replaceState(null, '', '/login')
+    const params = new URLSearchParams({ returnTo: window.location.origin })
+    window.location.assign(`${getApiBase()}/auth/google?${params.toString()}`)
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -36,119 +44,135 @@ export default function Login() {
       return
     }
 
-    setError(response.data?.error ?? 'Unable to log in. Please try again.')
+    setError(response.data?.error ?? response.error ?? 'Unable to log in. Please try again.')
     setIsSubmitting(false)
   }
 
   return (
-    <div className="relative min-h-screen" style={{ background: 'var(--navy-950)' }}>
-      <Link
-        to="/settings"
-        className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80 backdrop-blur-md transition hover:border-primary/30 hover:bg-white/10 hover:text-white sm:right-6 sm:top-6"
-      >
-        <Settings2 className="h-4 w-4" />
-        Appearance Settings
-      </Link>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.08),transparent_45%),radial-gradient(circle_at_82%_10%,rgba(20,184,166,0.04),transparent_40%)]" />
-      <div className="relative grid min-h-screen lg:grid-cols-2">
-        <div className="flex items-center justify-center px-6 py-12 pt-24 lg:pt-12">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="w-full max-w-md"
-          >
-            <div className="mb-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] mb-2" style={{ color: 'var(--primary)' }}>FloFi</p>
-              <h1 className="font-display text-4xl italic text-white">Welcome back</h1>
-              <p className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>Log in to your precision wealth dashboard.</p>
+    <div className="relative min-h-screen bg-[#f4f7f6] flex flex-col justify-between font-sans text-slate-800">
+      {/* Invisible spacer to help vertical alignment */}
+      <div className="h-6 sm:h-12 w-full" />
+
+      {/* Main Container */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[460px] flex flex-col items-center"
+        >
+          {/* Card */}
+
+          <div className="bg-white border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[32px] p-8 sm:p-10 w-full">
+            <Logo size={36} textClassName="text-2xl font-bold tracking-tight text-slate-900" className="mb-6 justify-center" />
+            {/* Title & Subtitle */}
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">Welcome back !</h1>
+              <p className="text-xs text-slate-500 mt-1">Enter your credentials to access your dashboard</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Google Login Button */}
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center gap-2.5 w-full py-3 border border-slate-200 hover:bg-slate-50 transition-colors rounded-xl text-xs font-bold text-slate-700 bg-white"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+              </svg>
+              Continue with Google
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-5 text-[9px] font-bold tracking-wider text-slate-400">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span>OR EMAIL</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 rounded-xl border border-red-100 bg-red-50/50 px-4 py-3 text-xs text-red-600">
+                {error}
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Address */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Email</label>
+                <label className="text-[11px] font-bold tracking-wide text-slate-600 block">Email Address</label>
                 <Input
                   type="email"
-                  placeholder="alex@flofi.ai"
+                  placeholder="name@example.com"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
+                  className="bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-xs placeholder:text-slate-400 focus-visible:border-[#006660] focus-visible:ring-[#006660]/20 focus:border-[#006660] focus:ring-[#006660] focus:ring-1 outline-none w-full"
                 />
               </div>
+
+              {/* Password */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium" style={{ color: 'var(--muted-foreground)' }}>Password</label>
-                <Input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  className="bg-white/[0.04] border-white/[0.08] text-white rounded-md placeholder:text-white/30 focus:border-primary/40 focus:ring-primary/20"
-                />
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="text-[11px] font-bold tracking-wide text-slate-600 block">Password</label>
+                  <a href="#" className="text-[11px] font-bold text-[#006660] hover:underline">Forgot?</a>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-white border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-xs placeholder:text-slate-400 focus-visible:border-[#006660] focus-visible:ring-[#006660]/20 focus:border-[#006660] focus:ring-[#006660] focus:ring-1 outline-none w-full pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                <label className="flex items-center gap-2" style={{ color: 'var(--muted-foreground)' }}>
-                  <Checkbox id="remember" />
-                  <span className="text-xs">Remember me</span>
-                </label>
-                <button className="text-xs hover:underline" type="button" style={{ color: 'var(--primary)' }}>
-                  Forgot password?
-                </button>
-              </div>
-              {error && <div className="rounded-md border px-4 py-3 text-sm" style={{ borderColor: 'rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', color: 'var(--danger)' }}>{error}</div>}
-              <Button className="w-full" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#006660] hover:bg-[#00524d] active:bg-[#00423e] text-white font-bold py-3.5 rounded-xl text-xs transition-colors shadow-sm mt-6"
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
 
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-white/[0.06]" />
-                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>Or continue</span>
-                <div className="flex-1 h-px bg-white/[0.06]" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" type="button">Google</Button>
-                <Button variant="outline" type="button">Apple</Button>
-              </div>
-            </div>
-
-            <p className="mt-6 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              Don't have an account?{' '}
-              <Link className="font-semibold hover:underline" style={{ color: 'var(--primary)' }} to="/register">Sign up</Link>
-            </p>
-          </motion.div>
-        </div>
-
-        <div className="relative hidden items-center justify-center px-8 py-12 lg:flex">
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, var(--navy-900), var(--navy-950), var(--navy-800))' }} />
-          <div className="absolute inset-0 grid-pattern opacity-30" />
-          <div className="relative z-10 flex max-w-md flex-col gap-6">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--primary)' }}>AI Intelligence</p>
-              <h2 className="font-display text-3xl italic text-white">Your portfolio, continuously optimized.</h2>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
-                FloFi monitors your asset allocation and delivers proactive insights across risk, liquidity, and tax efficiency.
+            {/* Redirect footer */}
+            <div className="text-center mt-6">
+              <p className="text-xs text-slate-500">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-[#006660] hover:underline font-bold ml-1">
+                  Sign up
+                </Link>
               </p>
             </div>
-            <div className="glass-card rounded-lg p-5">
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--accent)' }}>AI Insight</h3>
-              <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>Portfolio rebalanced with 3.2% risk reduction this week.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="glass-card rounded-lg p-4">
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Net worth</p>
-                <p className="text-xl font-bold text-white mt-1">$1.24M</p>
-              </div>
-              <div className="glass-card rounded-lg p-4">
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted-foreground)' }}>Cash runway</p>
-                <p className="text-xl font-bold text-white mt-1">18 months</p>
-              </div>
-            </div>
           </div>
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full max-w-7xl mx-auto px-6 py-6 border-t border-slate-200/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+        <p>© {new Date().getFullYear()} FloFi Precision Wealth Engineering. All rights reserved.</p>
+        <div className="flex items-center gap-5">
+          <a href="#" className="hover:text-slate-600 transition-colors">Privacy Policy</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Terms of Service</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Security</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Help Center</a>
         </div>
-      </div>
+      </footer>
     </div>
   )
 }
