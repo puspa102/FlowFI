@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Mail, Phone, MapPin, DollarSign, Award, Trophy, Target,
-  Edit3, Camera, Calendar, Sparkles, Shield, Wallet
+  Edit3, Camera, Calendar, Sparkles, Shield, Wallet, Upload, ImagePlus, X, CheckCircle2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,28 +10,23 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import { useGetProfileQuery, useUpdateSettingsMutation } from '@/store/api/profileApi'
+import { useGetProfileQuery, useUpdateSettingsMutation, useUploadAvatarMutation } from '@/store/api/profileApi'
 import { useGetSavingsGoalsQuery } from '@/store/api/savingsGoalsApi'
 
-const PRESET_AVATARS = [
-  { id: 'avatar1', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80', label: 'Tech Leader' },
-  { id: 'avatar2', url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80', label: 'Investor' },
-  { id: 'avatar3', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80', label: 'Strategist' },
-  { id: 'avatar4', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80', label: 'Entrepreneur' },
-  { id: 'avatar5', url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=150&q=80', label: 'Creator' },
-  { id: 'avatar6', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80', label: 'Executive' },
-  { id: 'avatar7', url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80', label: 'Analyst' },
-  { id: 'avatar8', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80', label: 'Adviser' },
-]
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001'
 
 export default function Profile() {
   const { data: profile, isLoading, isError, refetch } = useGetProfileQuery(undefined)
   const { data: savingsData } = useGetSavingsGoalsQuery(undefined)
   const [updateSettings, { isLoading: isSaving }] = useUpdateSettingsMutation()
+  const [uploadAvatar, { isLoading: isUploading }] = useUploadAvatarMutation()
 
   const [isEditing, setIsEditing] = useState(false)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
-  const [avatar, setAvatar] = useState('https://i.pravatar.cc/150?u=a042581f4e29026704d')
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null)
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -39,14 +34,6 @@ export default function Profile() {
     country: '',
     currency: 'USD',
   })
-
-  // Load avatar from localStorage on mount
-  useEffect(() => {
-    const savedAvatar = localStorage.getItem('flofi_user_avatar')
-    if (savedAvatar) {
-      setAvatar(savedAvatar)
-    }
-  }, [])
 
   // Sync profile details when loaded
   useEffect(() => {
@@ -83,13 +70,60 @@ export default function Profile() {
     }
   }
 
-  const handleSelectAvatar = (url: string) => {
-    setAvatar(url)
-    localStorage.setItem('flofi_user_avatar', url)
-    setShowAvatarPicker(false)
-    // Dispatch custom event to notify topbar immediately
-    window.dispatchEvent(new Event('flofi_avatar_updated'))
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a JPEG, PNG, WebP, or GIF image.')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be under 5MB.')
+      return
+    }
+
+    setUploadFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setUploadPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
   }
+
+  const handleUploadAvatar = async () => {
+    if (!uploadFile) return
+    try {
+      const formData = new FormData()
+      formData.append('avatar', uploadFile)
+      await uploadAvatar(formData).unwrap()
+      setUploadPreview(null)
+      setUploadFile(null)
+      setShowAvatarPicker(false)
+      setUploadSuccess(true)
+      refetch()
+      // Notify topbar to refresh avatar
+      window.dispatchEvent(new Event('flofi_avatar_updated'))
+      setTimeout(() => setUploadSuccess(false), 3000)
+    } catch (err) {
+      console.error('Failed to upload avatar:', err)
+    }
+  }
+
+  const handleClearPreview = () => {
+    setUploadPreview(null)
+    setUploadFile(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // Resolve avatar URL
+  const avatarUrl = profile?.profileImage
+    ? `${API_BASE}${profile.profileImage}`
+    : null
 
   const initials = formData.fullName
     .split(' ')
@@ -105,6 +139,31 @@ export default function Profile() {
 
   const hasHighSavingsProgress = totalSavingsGoalPercent > 50
   const hasMultipleAccounts = (profile?.accountCount || 0) >= 3
+
+  // Compute a simple financial health score from real data
+  const computedScore = (() => {
+    let score = 400 // base
+    if (profile?.accountCount) score += Math.min(profile.accountCount * 50, 150)
+    if (totalSavingsGoalPercent > 0) score += Math.round(totalSavingsGoalPercent * 2)
+    if (hasMultipleAccounts) score += 50
+    return Math.min(score, 850)
+  })()
+
+  const scoreLabel = computedScore >= 750 ? 'Excellent' : computedScore >= 600 ? 'Good' : computedScore >= 450 ? 'Fair' : 'Building'
+  const scoreDescription = computedScore >= 750
+    ? 'Outstanding financial habits! Your savings and accounts show strong diversification.'
+    : computedScore >= 600
+      ? 'Solid progress! Keep growing your savings goals and connecting accounts.'
+      : computedScore >= 450
+        ? 'You\'re on the right track. Set more goals and track your spending to improve.'
+        : 'Getting started! Connect accounts and create savings goals to build your score.'
+
+  // Determine membership tier from real data
+  const memberTier = profile?.accountCount >= 3 && totalSavingsGoalPercent > 50
+    ? 'Pro Wealth Manager'
+    : profile?.accountCount >= 1
+      ? 'Active Member'
+      : 'New Member'
 
   if (isLoading) {
     return (
@@ -134,6 +193,21 @@ export default function Profile() {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto space-y-8 pb-10">
+
+        {/* Upload Success Toast */}
+        <AnimatePresence>
+          {uploadSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="fixed top-6 right-6 z-[100] flex items-center gap-3 bg-[var(--success)] text-white px-5 py-3 rounded-2xl shadow-xl"
+            >
+              <CheckCircle2 size={18} />
+              <span className="text-sm font-semibold">Profile photo updated successfully!</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -200,8 +274,8 @@ export default function Profile() {
                 {/* Avatar Circle */}
                 <div className="relative group cursor-pointer mb-5" onClick={() => setShowAvatarPicker(true)}>
                   <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md relative bg-[var(--primary-light)] flex items-center justify-center">
-                    {avatar ? (
-                      <img src={avatar} alt="Profile Preset" className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300" />
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300" />
                     ) : (
                       <span className="text-3xl font-extrabold text-[var(--primary)]">{initials}</span>
                     )}
@@ -220,7 +294,7 @@ export default function Profile() {
 
                 <h2 className="text-xl font-bold font-display text-[var(--foreground)] mt-2">{formData.fullName || 'User'}</h2>
                 <Badge className="mt-1.5 px-3 py-1 font-semibold rounded-full border-0 text-xs bg-[var(--success-light)] text-[var(--success)]">
-                  Pro Wealth Manager
+                  {memberTier}
                 </Badge>
 
                 <div className="w-full border-t border-[var(--border)] my-6"></div>
@@ -243,7 +317,7 @@ export default function Profile() {
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--muted-foreground)]">Joined FloFi</p>
                       <p className="text-sm font-semibold text-[var(--foreground)]">
-                        {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'June 2026'}
+                        {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
                       </p>
                     </div>
                   </div>
@@ -254,14 +328,14 @@ export default function Profile() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--muted-foreground)]">System Base Currency</p>
-                      <p className="text-sm font-semibold text-[var(--foreground)]">{formData.currency} ({formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₨'})</p>
+                      <p className="text-sm font-semibold text-[var(--foreground)]">{formData.currency} ({formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : formData.currency === 'GBP' ? '£' : formData.currency === 'JPY' ? '¥' : formData.currency === 'NPR' ? '₨' : '$'})</p>
                     </div>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Premium Wealth Score Circle */}
+            {/* Financial Health Score — computed from real data */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -271,11 +345,11 @@ export default function Profile() {
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">FloFi Financial Score</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold text-[var(--foreground)]">795</span>
+                  <span className="text-3xl font-extrabold text-[var(--foreground)]">{computedScore}</span>
                   <span className="text-xs font-bold text-[var(--success)]">/ 850</span>
                 </div>
                 <p className="text-xs text-[var(--muted-foreground)] leading-relaxed">
-                  Excellent score! You have strong savings habits and a highly optimized cashflow system.
+                  {scoreLabel} — {scoreDescription}
                 </p>
               </div>
               <div className="relative shrink-0 w-20 h-20 flex items-center justify-center">
@@ -289,7 +363,7 @@ export default function Profile() {
                     strokeWidth="6"
                     fill="transparent"
                     strokeDasharray={2 * Math.PI * 32}
-                    strokeDashoffset={2 * Math.PI * 32 * (1 - 795 / 850)}
+                    strokeDashoffset={2 * Math.PI * 32 * (1 - computedScore / 850)}
                     strokeLinecap="round"
                   />
                 </svg>
@@ -385,7 +459,7 @@ export default function Profile() {
                         <Input
                           type="text"
                           disabled={true}
-                          value={`${formData.currency} (${formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : '₨'})`}
+                          value={`${formData.currency} (${formData.currency === 'USD' ? '$' : formData.currency === 'EUR' ? '€' : formData.currency === 'GBP' ? '£' : '₨'})`}
                           className="rounded-xl bg-transparent border-transparent disabled:opacity-100 disabled:cursor-default px-4"
                         />
                       )}
@@ -482,7 +556,7 @@ export default function Profile() {
 
       </div>
 
-      {/* Preset Avatar Selection Dialog/Modal */}
+      {/* Avatar Upload Modal */}
       <AnimatePresence>
         {showAvatarPicker && (
           <>
@@ -491,7 +565,7 @@ export default function Profile() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowAvatarPicker(false)}
+              onClick={() => { setShowAvatarPicker(false); handleClearPreview() }}
               className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
             ></motion.div>
 
@@ -504,40 +578,90 @@ export default function Profile() {
             >
               <div>
                 <h3 className="text-lg font-bold font-display text-[var(--foreground)] flex items-center gap-2">
-                  <Sparkles className="text-[var(--primary)]" size={18} />
-                  Choose Profile Preset
+                  <ImagePlus className="text-[var(--primary)]" size={20} />
+                  Upload Profile Photo
                 </h3>
                 <p className="text-xs text-[var(--muted-foreground)] mt-1">
-                  Select one of our stunning Unsplash portrait creations to represent your Wealth Identity.
+                  Choose a photo from your device. Supported formats: JPEG, PNG, WebP, GIF (max 5MB).
                 </p>
               </div>
 
-              {/* Grid */}
-              <div className="grid grid-cols-4 gap-4">
-                {PRESET_AVATARS.map((preset) => (
-                  <motion.button
-                    key={preset.id}
-                    onClick={() => handleSelectAvatar(preset.url)}
-                    className="flex flex-col items-center gap-1 text-center relative group focus:outline-none"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <div className={`w-14 h-14 rounded-full overflow-hidden border-2 ${avatar === preset.url ? 'border-[var(--primary)] scale-105 shadow-md' : 'border-transparent group-hover:border-[var(--primary)]/30'}`}>
-                      <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+              {/* Upload Area */}
+              <div className="flex flex-col items-center gap-4">
+                {uploadPreview ? (
+                  <div className="relative">
+                    <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-[var(--primary)] shadow-lg">
+                      <img src={uploadPreview} alt="Preview" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-[10px] text-[var(--muted-foreground)] font-semibold truncate w-full mt-1">{preset.label}</span>
-                  </motion.button>
-                ))}
+                    <button
+                      onClick={handleClearPreview}
+                      className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-[var(--danger)] text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-full cursor-pointer">
+                    <div className="border-2 border-dashed border-[var(--border)] rounded-2xl p-8 flex flex-col items-center gap-3 hover:border-[var(--primary)] hover:bg-[rgba(0,181,175,0.02)] transition-all duration-200">
+                      <div className="w-16 h-16 rounded-full bg-[var(--primary-light)] text-[var(--primary)] flex items-center justify-center">
+                        <Upload size={24} />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-[var(--foreground)]">Click to browse files</p>
+                        <p className="text-xs text-[var(--muted-foreground)] mt-1">or drag and drop your image here</p>
+                      </div>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+                )}
+
+                {/* Current avatar preview */}
+                {!uploadPreview && avatarUrl && (
+                  <div className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-[var(--background)] border border-[var(--border)]">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--primary-light)] shrink-0">
+                      <img src={avatarUrl} alt="Current" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-[var(--foreground)]">Current Photo</p>
+                      <p className="text-[10px] text-[var(--muted-foreground)]">Upload a new image to replace it</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 border-t border-[var(--border)] pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setShowAvatarPicker(false)}
+                  onClick={() => { setShowAvatarPicker(false); handleClearPreview() }}
                   className="rounded-xl px-4 py-2 text-xs font-semibold"
                 >
                   Cancel
                 </Button>
+                {uploadPreview && (
+                  <Button
+                    onClick={handleUploadAvatar}
+                    disabled={isUploading}
+                    className="rounded-xl px-5 py-2 text-xs font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white flex items-center gap-2"
+                  >
+                    {isUploading ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} />
+                        Upload Photo
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </motion.div>
           </>

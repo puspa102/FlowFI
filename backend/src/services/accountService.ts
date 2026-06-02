@@ -1,9 +1,8 @@
 import prisma from '../config/prisma'
-import { ensureDemoData } from './demoDataService'
+import fs from 'fs'
+import path from 'path'
 
 export async function getAccounts(userId: number) {
-  await ensureDemoData(userId)
-
   const accounts = await prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } })
 
   return accounts.map((account) => ({
@@ -33,6 +32,7 @@ export async function getUserProfile(userId: number) {
     phone: user.phone ?? '',
     country: user.country ?? '',
     currency: user.currency ?? 'USD',
+    profileImage: user.profileImage ?? null,
     twoFactorEnabled: user.twoFactorEnabled ?? false,
     notifications: {
       email: user.notificationEmail ?? true,
@@ -81,5 +81,30 @@ export async function updateUserSettings(userId: number, settings: {
       push: user.notificationPush ?? true,
       sms: user.notificationSms ?? false,
     },
+  }
+}
+
+export async function uploadProfileImage(userId: number, filePath: string) {
+  // Get the current user to check if they have an existing profile image
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } })
+
+  // Delete old profile image file if it exists
+  if (currentUser?.profileImage) {
+    const oldFilePath = path.join(__dirname, '../../uploads/avatars', path.basename(currentUser.profileImage))
+    if (fs.existsSync(oldFilePath)) {
+      fs.unlinkSync(oldFilePath)
+    }
+  }
+
+  // Store relative URL path for serving
+  const imageUrl = `/uploads/avatars/${path.basename(filePath)}`
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { profileImage: imageUrl },
+  })
+
+  return {
+    profileImage: user.profileImage,
   }
 }

@@ -14,7 +14,15 @@ export const profileApi = flofiApi.injectEndpoints({
       }),
       invalidatesTags: ['Profile'],
     }),
+    uploadAvatar: build.mutation({
+      query: (formData: FormData) => ({
+        url: '/api/accounts/profile/avatar',
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
   }),
 })
 
-export const { useGetProfileQuery, useUpdateSettingsMutation } = profileApi
+export const { useGetProfileQuery, useUpdateSettingsMutation, useUploadAvatarMutation } = profileApi
