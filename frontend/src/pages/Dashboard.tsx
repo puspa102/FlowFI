@@ -1,4 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Wallet,
   PiggyBank,
@@ -6,6 +8,8 @@ import {
   ShoppingBag,
   Plus,
   Bot,
+  ArrowUpRight,
+  BarChart3,
 } from 'lucide-react'
 
 import Skeleton from '@/components/ui/Skeleton'
@@ -16,15 +20,28 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
 }
 
-
 export default function Dashboard() {
   const shouldReduce = useReducedMotion()
-  const { isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummaryQuery(undefined)
-  const { isLoading: analyticsLoading } = useGetDashboardAnalyticsQuery(undefined)
+  const navigate = useNavigate()
+  const [cashFlowPeriod, setCashFlowPeriod] = useState<'monthly' | 'quarterly'>('monthly')
+  const { data: summaryData, isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummaryQuery(undefined)
+  const { data: analyticsData, isLoading: analyticsLoading } = useGetDashboardAnalyticsQuery(undefined)
 
   const isLoading = summaryLoading || analyticsLoading
+  const cashFlowBars = useMemo(() => {
+    const monthly = summaryData?.cashFlow?.length
+      ? summaryData.cashFlow.map((entry: any) => Math.max(8, Math.min(100, Math.round(((entry.income ?? 0) + (entry.expense ?? 0)) / 1000))))
+      : [40, 60, 50, 70, 95, 60, 80, 45, 60, 50, 65, 90]
 
+    if (cashFlowPeriod === 'monthly') {
+      return monthly
+    }
 
+    return [0, 1, 2, 3].map((quarter) => {
+      const values = monthly.slice(quarter * 3, quarter * 3 + 3)
+      return values.length ? Math.round(values.reduce((sum: number, value: number) => sum + value, 0) / values.length) : 8
+    })
+  }, [cashFlowPeriod, summaryData?.cashFlow])
 
   if (isLoading) {
     return (
@@ -47,7 +64,7 @@ export default function Dashboard() {
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="h-16 w-16 rounded-full flex items-center justify-center" style={{ background: 'var(--danger-light)' }}>
-            <span className="text-2xl">⚠️</span>
+            <span className="text-2xl">!</span>
           </div>
           <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Failed to load dashboard data. Please try again later.</p>
         </div>
@@ -55,12 +72,16 @@ export default function Dashboard() {
     )
   }
 
+  const hasTransactions = (summaryData?.recentTransactions?.length ?? 0) > 0
+  const hasCashFlow = (summaryData?.cashFlow?.length ?? 0) > 0
+  const totalBalance = summaryData?.totalBalance ?? 0
+  const balanceChangePercent = summaryData?.balanceChangePercent ?? 0
 
   const statCards = [
     {
       label: 'TOTAL BALANCE',
-      value: 2482190.5,
-      change: 12,
+      value: totalBalance,
+      change: balanceChangePercent,
       isMoney: true,
       icon: Wallet,
       iconBg: 'var(--primary-light)',
@@ -68,8 +89,8 @@ export default function Dashboard() {
     },
     {
       label: 'MONTHLY EXPENSES',
-      value: 12450.00,
-      change: -4,
+      value: analyticsData?.expenseThisMonth ?? 0,
+      change: analyticsData?.expenseChange,
       isMoney: true,
       icon: ShoppingBag,
       iconBg: 'var(--background)',
@@ -77,22 +98,28 @@ export default function Dashboard() {
     },
     {
       label: 'SAVINGS RATE',
-      value: 32.8,
+      value: analyticsData?.savingsRate ?? 0,
       isPercent: true,
       icon: PiggyBank,
       iconBg: 'var(--danger-light)',
       iconColor: 'var(--danger)',
     },
     {
-      label: 'PORTFOLIO ROI',
-      value: 18.2,
+      label: 'BUDGET UTILIZATION',
+      value: analyticsData?.budgetUtilization ?? 0,
       isPercent: true,
-      isPositive: true,
+      isPositive: (analyticsData?.budgetUtilization ?? 0) > 0,
       icon: TrendingUp,
       iconBg: 'var(--primary)',
       iconColor: '#fff',
     },
   ]
+
+  const cardStyle = {
+    background: 'var(--card)',
+    border: '1px solid var(--border)',
+    boxShadow: 'var(--shadow-card)',
+  }
 
   return (
     <DashboardLayout>
@@ -102,15 +129,27 @@ export default function Dashboard() {
             Portfolio Overview
           </h1>
           <p className="text-[15px] font-medium text-[--muted-foreground] mt-1">
-            Your net worth increased by <span className="text-[--success] font-semibold">2.4%</span> since last month.
+            {balanceChangePercent !== 0
+              ? <>Your net worth {balanceChangePercent > 0 ? 'increased' : 'decreased'} by <span className={balanceChangePercent > 0 ? 'text-[--success] font-semibold' : 'text-[--danger] font-semibold'}>{Math.abs(balanceChangePercent)}%</span> since last month.</>
+              : 'Track your finances and watch your portfolio grow.'
+            }
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-[--border-strong] bg-white text-[14px] font-semibold text-[--foreground] hover:bg-[--background] transition-colors">
-            <span className="text-[16px]">🤖</span> Ask AI
+          <button
+            type="button"
+            onClick={() => navigate('/ai-assistant')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full text-[14px] font-semibold transition-colors hover:opacity-85"
+            style={{ background: 'var(--card)', border: '1px solid var(--border-strong)', color: 'var(--foreground)' }}
+          >
+            <Bot size={16} /> Ask AI
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#009c97] text-white text-[14px] font-semibold hover:bg-[--primary-hover] transition-colors">
-               <Plus size={18} /> Add Transaction
+          <button
+            type="button"
+            onClick={() => navigate('/transactions')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[var(--primary)] text-white text-[14px] font-semibold hover:opacity-90 transition-colors"
+          >
+            <Plus size={18} /> Add Transaction
           </button>
         </div>
       </header>
@@ -126,7 +165,8 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 * i, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               whileHover={shouldReduce ? {} : { scale: 1.01 }}
-              className="rounded-[20px] p-6 bg-white border border-[rgba(114,120,119,0.15)] shadow-[0_2px_12px_rgba(26,43,60,0.03)]"
+              className="rounded-[20px] p-6"
+              style={cardStyle}
             >
               <div className="flex items-start justify-between">
                 <div
@@ -135,12 +175,12 @@ export default function Dashboard() {
                 >
                   <Icon size={22} style={{ color: stat.iconColor }} />
                 </div>
-                {stat.change !== undefined && (
+                {stat.change !== undefined && stat.change !== 0 && (
                   <span
                     className="inline-flex items-center gap-0.5 rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide"
                     style={{
-                      background: stat.change >= 0 ? '#E5F7F6' : '#FFF0F0',
-                      color: stat.change >= 0 ? 'var(--primary)' : '#FF6B6B',
+                      background: stat.change >= 0 ? 'var(--primary-light)' : 'var(--danger-light)',
+                      color: stat.change >= 0 ? 'var(--primary)' : 'var(--danger)',
                     }}
                   >
                     {stat.change > 0 ? '+' : ''}{stat.change}%
@@ -150,7 +190,6 @@ export default function Dashboard() {
               <div className="mt-8">
                 <p className="text-[11px] font-bold text-[--muted-foreground] tracking-wider uppercase mb-2">{stat.label}</p>
                 <div className={`text-[28px] font-semibold ${stat.isPositive ? 'text-[--success]' : 'text-[--foreground]'} tracking-tight`}>
-                  {stat.isPositive && '+'}
                   {stat.isPercent ? stat.value + '%' : formatCurrency(stat.value)}
                 </div>
               </div>
@@ -164,174 +203,207 @@ export default function Dashboard() {
         {/* Left Column */}
         <div className="space-y-6">
           {/* Cash Flow Analysis */}
-          <div className="rounded-[20px] p-6 bg-white border border-[rgba(114,120,119,0.15)] shadow-[0_2px_12px_rgba(26,43,60,0.03)]">
+          <div className="rounded-[20px] p-6" style={cardStyle}>
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-[20px] font-bold text-[--foreground]">Cash Flow Analysis</h2>
-                <p className="text-[14px] text-[--muted-foreground] mt-1">Last 12 months performance</p>
+                <p className="text-[14px] text-[--muted-foreground] mt-1">
+                  {hasCashFlow ? 'Last 12 months performance' : 'Add transactions to see your cash flow'}
+                </p>
               </div>
-              <div className="flex bg-[rgba(114,120,119,0.05)] rounded-full p-1 border border-[rgba(114,120,119,0.08)] text-[12px] font-semibold">
-                 <button className="px-4 py-1.5 rounded-full text-[--muted-foreground] hover:text-[--foreground]">Monthly</button>
-                 <button className="px-4 py-1.5 rounded-full bg-[#317F7B] text-white shadow-sm">Quarterly</button>
+              <div className="flex rounded-full p-1 text-[12px] font-semibold" style={{ background: 'var(--surface-sunken)', border: '1px solid var(--border)' }}>
+                <button
+                  type="button"
+                  onClick={() => setCashFlowPeriod('monthly')}
+                  className={`px-4 py-1.5 rounded-full transition-colors ${cashFlowPeriod === 'monthly' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[--muted-foreground] hover:text-[--foreground]'}`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCashFlowPeriod('quarterly')}
+                  className={`px-4 py-1.5 rounded-full transition-colors ${cashFlowPeriod === 'quarterly' ? 'bg-[var(--primary)] text-white shadow-sm' : 'text-[--muted-foreground] hover:text-[--foreground]'}`}
+                >
+                  Quarterly
+                </button>
               </div>
             </div>
             {/* Chart Area */}
             <div className="flex h-56 items-end justify-between gap-2 px-2">
-              {/* Mocking bars */}
-              {[40, 60, 50, 70, 95, 60, 80, 45, 60, 50, 65, 90].map((val, i) => (
+              {cashFlowBars.map((val: number, i: number) => (
                 <div key={i} className="flex-1 max-w-[28px] h-full flex items-end">
-                   <motion.div 
-                     className="w-full rounded-t-sm" 
-                     style={{ background: i % 2 === 0 ? '#C2D6D5' : 'var(--primary)', height: `${val}%` }}
-                     initial={{ height: 0 }}
-                     animate={{ height: `${val}%` }}
-                     transition={{ delay: i * 0.05, duration: 0.5 }}
-                   />
+                  <motion.div
+                    className="w-full rounded-t-sm"
+                    style={{ background: i % 2 === 0 ? 'rgba(var(--primary-rgb), 0.2)' : 'var(--primary)', height: `${val}%` }}
+                    initial={{ height: 0 }}
+                    animate={{ height: `${val}%` }}
+                    transition={{ delay: i * 0.05, duration: 0.5 }}
+                  />
                 </div>
               ))}
             </div>
           </div>
 
           {/* Recent Transactions */}
-          <div className="rounded-[20px] p-6 bg-white border border-[rgba(114,120,119,0.15)] shadow-[0_2px_12px_rgba(26,43,60,0.03)]">
+          <div className="rounded-[20px] p-6" style={cardStyle}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-[20px] font-bold text-[--foreground]">Recent Transactions</h2>
-              <button className="text-[14px] font-bold text-[--info] hover:opacity-80">View All</button>
+              <button
+                type="button"
+                onClick={() => navigate('/transactions')}
+                className="text-[14px] font-bold hover:opacity-80"
+                style={{ color: 'var(--primary)' }}
+              >
+                View All
+              </button>
             </div>
-            
-            <div className="space-y-6">
-              {/* Box 1 */}
-              <div className="flex items-center justify-between pb-6 border-b border-[rgba(114,120,119,0.1)]">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[var(--background)] flex items-center justify-center text-[var(--muted-foreground)]">
-                      🍽️
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[--foreground]">L'Oiseau Blanc</p>
-                      <p className="text-[13px] text-[--muted-foreground]">Dining & Gastronomy • Today</p>
-                    </div>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-[16px] font-bold text-[--foreground]">-$1,240.00</p>
-                    <p className="text-[12px] font-semibold text-[--info]">Pending</p>
-                 </div>
-              </div>
-              
-              {/* Box 2 */}
-              <div className="flex items-center justify-between pb-6 border-b border-[rgba(114,120,119,0.1)]">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[var(--background)] flex items-center justify-center text-[var(--muted-foreground)]">
-                      💵
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[--foreground]">Monthly Dividend</p>
-                      <p className="text-[13px] text-[--muted-foreground]">Investment Income • Yesterday</p>
-                    </div>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-[16px] font-bold text-[--success]">+8,420.50</p>
-                    <p className="text-[12px] font-semibold text-[--muted-foreground]">Completed</p>
-                 </div>
-              </div>
 
-              {/* Box 3 */}
-              <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[var(--background)] flex items-center justify-center text-[var(--muted-foreground)]">
-                      🛍️
+            {hasTransactions ? (
+              <div className="space-y-6">
+                {summaryData.recentTransactions.slice(0, 3).map((tx: any, index: number) => (
+                  <div
+                    key={tx.id || index}
+                    className={`flex items-center justify-between ${index !== Math.min(2, summaryData.recentTransactions.length - 1) ? 'pb-6 border-b' : ''}`}
+                    style={index !== Math.min(2, summaryData.recentTransactions.length - 1) ? { borderColor: 'var(--border)' } : undefined}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'var(--surface-sunken)' }}>
+                        {tx.amount < 0 ? <ShoppingBag size={18} style={{ color: 'var(--muted-foreground)' }} /> : <ArrowUpRight size={18} style={{ color: 'var(--primary)' }} />}
+                      </div>
+                      <div>
+                        <p className="text-[15px] font-bold text-[--foreground]">{tx.description}</p>
+                        <p className="text-[13px] text-[--muted-foreground]">{tx.category} {tx.date ? `• ${new Date(tx.date).toLocaleDateString()}` : ''}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[15px] font-bold text-[--foreground]">Apple Store</p>
-                      <p className="text-[13px] text-[--muted-foreground]">Electronics • 3 Days Ago</p>
+                    <div className="text-right">
+                      <p className={`text-[16px] font-bold ${tx.amount < 0 ? 'text-[--foreground]' : 'text-[--success]'}`}>{formatCurrency(tx.amount)}</p>
+                      <p className={`text-[12px] font-semibold ${tx.status === 'PENDING' ? 'text-[--primary]' : 'text-[--muted-foreground]'}`}>{tx.status}</p>
                     </div>
-                 </div>
-                 <div className="text-right">
-                    <p className="text-[16px] font-bold text-[--foreground]">-$2,199.00</p>
-                    <p className="text-[12px] font-semibold text-[--muted-foreground]">Completed</p>
-                 </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-10 rounded-xl" style={{ border: '2px dashed var(--border)' }}>
+                <BarChart3 size={32} className="mx-auto mb-3" style={{ color: 'var(--muted-foreground)' }} />
+                <p className="font-medium" style={{ color: 'var(--foreground)' }}>No transactions yet</p>
+                <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>Add your first transaction to see activity here.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/transactions')}
+                  className="mt-4 px-5 py-2 rounded-full text-sm font-semibold text-white"
+                  style={{ background: 'var(--primary)' }}
+                >
+                  Add Transaction
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Column */}
         <div className="space-y-6">
           {/* AI Intelligent Audit */}
-          <div className="rounded-[20px] p-6 bg-[#a8eeea] overflow-hidden relative">
-            <p className="text-[10px] font-bold text-[--info] tracking-wider uppercase mb-5 flex items-center gap-2">
+          <div className="rounded-[20px] p-6 overflow-hidden relative" style={{ background: 'linear-gradient(135deg, var(--primary-light), rgba(var(--accent-rgb), 0.16))', border: '1px solid var(--border)' }}>
+            <p className="text-[10px] font-bold tracking-wider uppercase mb-5 flex items-center gap-2" style={{ color: 'var(--primary)' }}>
               <Bot size={14} /> AI INTELLIGENT AUDIT
             </p>
-            <h3 className="text-[24px] font-bold text-white mb-6 leading-tight" style={{ color: 'black' }}>
-               "You spent 18% more on dining this month than your 3-month average."
+            <h3 className="text-[22px] font-bold mb-5 leading-tight" style={{ color: 'var(--foreground)' }}>
+              {hasTransactions
+                ? '"You spent 18% more on dining this month than your 3-month average."'
+                : '"Start tracking expenses to receive personalized financial insights."'
+              }
             </h3>
-            <p className="text-[14px] text-[rgba(10,2,2,0.8)] mb-8 leading-relaxed">
-              Recommended: Adjust your entertainment budget by $400 to maintain savings trajectory.
+            <p className="text-[14px] mb-8 leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
+              {hasTransactions
+                ? 'Recommended: Adjust your entertainment budget by $400 to maintain savings trajectory.'
+                : 'Add transactions, budgets, and goals to unlock AI-powered financial coaching.'
+              }
             </p>
-            <button className="bg-white text-[--info] px-6 py-2.5 rounded-full font-bold text-[14px] shadow-sm hover:bg-[--background] transition-colors">
-              Action Plan
+            <button
+              type="button"
+              onClick={() => navigate('/ai-assistant')}
+              className="px-6 py-2.5 rounded-full font-bold text-[14px] shadow-sm transition-colors hover:opacity-85"
+              style={{ background: 'var(--card)', color: 'var(--primary)' }}
+            >
+              {hasTransactions ? 'Action Plan' : 'Get Started'}
             </button>
-            <div className="absolute inset-0 bg-[--primary] mix-blend-multiply opacity-90 -z-10" />
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-[--info] blur-3xl opacity-20 rounded-full -z-10" />
           </div>
 
           {/* Health Score */}
-          <div className="rounded-[20px] p-6 bg-white border border-[rgba(114,120,119,0.15)] shadow-[0_2px_12px_rgba(26,43,60,0.03)] flex items-center justify-between">
+          <div className="rounded-[20px] p-6 flex items-center justify-between" style={cardStyle}>
             <h3 className="text-[16px] font-bold text-[--foreground]">Health Score</h3>
             <div className="flex items-center gap-4">
-               <div className="relative w-16 h-16 flex items-center justify-center">
-                  <svg className="w-full h-full rotate-[-90deg]">
-                     <circle cx="32" cy="32" r="28" fill="none" stroke="#F4F6F8" strokeWidth="6" />
-                     <circle cx="32" cy="32" r="28" fill="none" stroke="var(--info)" strokeWidth="6" strokeDasharray="175" strokeDashoffset="26" strokeLinecap="round" />
-                  </svg>
-                  <span className="absolute text-[20px] font-bold text-[--foreground]">85</span>
-               </div>
-               <div>
-                  <p className="text-[14px] font-bold text-[--foreground]">Excellent</p>
-                  <p className="text-[12px] text-[--muted-foreground]">Top 5% of users</p>
-               </div>
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <svg className="w-full h-full rotate-[-90deg]">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="var(--surface-sunken)" strokeWidth="6" />
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="var(--primary)" strokeWidth="6" strokeDasharray="175" strokeDashoffset={`${175 - (175 * (summaryData?.health?.score ?? 0)) / 100}`} strokeLinecap="round" />
+                </svg>
+                <span className="absolute text-[20px] font-bold text-[--foreground]">{summaryData?.health?.score ?? 0}</span>
+              </div>
+              <div>
+                <p className="text-[14px] font-bold text-[--foreground]">{summaryData?.health?.label ?? 'Unknown'}</p>
+                <p className="text-[12px] text-[--muted-foreground]">{summaryData?.health?.summary ?? 'Add data to calculate'}</p>
+              </div>
             </div>
           </div>
 
           {/* Asset Allocation */}
-          <div className="rounded-[20px] p-6 bg-white border border-[rgba(114,120,119,0.15)] shadow-[0_2px_12px_rgba(26,43,60,0.03)]">
+          <div className="rounded-[20px] p-6" style={cardStyle}>
             <h3 className="text-[20px] font-bold text-[--foreground] mb-8">Asset Allocation</h3>
-            
+
             <div className="relative w-48 h-48 mx-auto mb-8 flex items-center justify-center">
-              {/* Simplistic representation of the chart using SVG */}
               <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--primary)" strokeWidth="16" strokeDasharray="251" strokeDashoffset="60" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--info)" strokeWidth="16" strokeDasharray="251" strokeDashoffset="190" strokeDashoffset-origin="60" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent)" strokeWidth="16" strokeDasharray="251" strokeDashoffset="220" strokeDashoffset-origin="250" />
+                {totalBalance > 0 ? (
+                  <>
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="var(--primary)" strokeWidth="16" strokeDasharray="251" strokeDashoffset="60" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(var(--accent-rgb), 0.6)" strokeWidth="16" strokeDasharray="60" strokeDashoffset="-191" />
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(var(--primary-rgb), 0.3)" strokeWidth="16" strokeDasharray="35" strokeDashoffset="-217" />
+                  </>
+                ) : (
+                  <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-sunken)" strokeWidth="16" />
+                )}
               </svg>
               <div className="absolute text-center">
-                 <p className="text-[10px] uppercase font-bold text-[--muted-foreground] tracking-widest">Top Class</p>
-                 <p className="text-[22px] font-bold text-[--foreground]">Equity</p>
+                {totalBalance > 0 ? (
+                  <>
+                    <p className="text-[10px] uppercase font-bold text-[--muted-foreground] tracking-widest">Top Class</p>
+                    <p className="text-[22px] font-bold text-[--foreground]">Equity</p>
+                  </>
+                ) : (
+                  <p className="text-[12px] font-medium text-[--muted-foreground]">No data</p>
+                )}
               </div>
             </div>
 
-            <div className="space-y-4">
-               <div className="flex items-center justify-between">
+            {totalBalance > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                     <span className="w-2.5 h-2.5 rounded-full bg-[--primary]"></span>
-                     <span className="text-[14px] font-medium text-[--foreground]">Equities</span>
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--primary)' }}></span>
+                    <span className="text-[14px] font-medium text-[--foreground]">Equities</span>
                   </div>
                   <span className="text-[16px] font-bold text-[--foreground]">64%</span>
-               </div>
-               <div className="flex items-center justify-between">
+                </div>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                     <span className="w-2.5 h-2.5 rounded-full bg-[--info]"></span>
-                     <span className="text-[14px] font-medium text-[--foreground]">Real Estate</span>
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(var(--accent-rgb), 0.6)' }}></span>
+                    <span className="text-[14px] font-medium text-[--foreground]">Real Estate</span>
                   </div>
                   <span className="text-[16px] font-bold text-[--foreground]">22%</span>
-               </div>
-               <div className="flex items-center justify-between">
+                </div>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                     <span className="w-2.5 h-2.5 rounded-full bg-[--accent]"></span>
-                     <span className="text-[14px] font-medium text-[--foreground]">Fixed Income</span>
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(var(--primary-rgb), 0.3)' }}></span>
+                    <span className="text-[14px] font-medium text-[--foreground]">Fixed Income</span>
                   </div>
                   <span className="text-[16px] font-bold text-[--foreground]">14%</span>
-               </div>
-            </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Add accounts & investments to see your allocation.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

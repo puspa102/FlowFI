@@ -1,12 +1,15 @@
 import prisma from '../config/prisma'
-import { ensureDemoData } from './demoDataService'
 import { getMonthLabel, toSignedAmount } from '../utils/finance'
 
 export async function getDashboard(userId: number) {
-  await ensureDemoData(userId)
+  const [accounts, bankAccounts] = await Promise.all([
+    prisma.account.findMany({ where: { userId } }),
+    prisma.bankAccount.findMany({ where: { userId, isActive: true } }),
+  ])
 
-  const accounts = await prisma.account.findMany({ where: { userId } })
-  const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0)
+  const legacyAccountBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0)
+  const bankAccountBalance = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0)
+  const totalBalance = legacyAccountBalance + bankAccountBalance
 
   const health = await prisma.wealthHealth.findFirst({
     where: { userId },
@@ -80,8 +83,6 @@ export async function getDashboard(userId: number) {
 }
 
 export async function getMonthlyAnalytics(userId: number) {
-  await ensureDemoData(userId)
-
   const now = new Date()
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
@@ -125,11 +126,11 @@ export async function getMonthlyAnalytics(userId: number) {
   const savingsRate = incomeThisMonth > 0 ? Math.round((netSavings / incomeThisMonth) * 100) : 0
 
   // Period over period change in %
-  const incomeChange = incomePrevMonth > 0 
-    ? Number((((incomeThisMonth - incomePrevMonth) / incomePrevMonth) * 100).toFixed(1)) 
+  const incomeChange = incomePrevMonth > 0
+    ? Number((((incomeThisMonth - incomePrevMonth) / incomePrevMonth) * 100).toFixed(1))
     : 0
-  const expenseChange = expensePrevMonth > 0 
-    ? Number((((expenseThisMonth - expensePrevMonth) / expensePrevMonth) * 100).toFixed(1)) 
+  const expenseChange = expensePrevMonth > 0
+    ? Number((((expenseThisMonth - expensePrevMonth) / expensePrevMonth) * 100).toFixed(1))
     : 0
 
   // Largest spending categories
