@@ -32,7 +32,7 @@ export async function updateGoal(req: Request, res: Response) {
     const userId = (req as any).userId
     const { id } = req.params
     const { currentAmount, monthlyContribution } = req.body
-    const goal = await goalsService.updateSavingsGoal(userId, parseInt(id), {
+    const goal = await goalsService.updateSavingsGoal(userId, Number(id), {
       currentAmount,
       monthlyContribution,
     })
@@ -42,11 +42,36 @@ export async function updateGoal(req: Request, res: Response) {
   }
 }
 
+export async function contributeGoal(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId
+    const { id } = req.params
+    const { amount } = req.body
+    
+    // fetch the goal first to get currentAmount
+    const goals = await goalsService.getSavingsGoals(userId)
+    const goalId = Number(id)
+    const goal = goals.find((g: any) => g.id === goalId)
+    
+    if (!goal) {
+      return res.status(404).json({ error: 'Goal not found' })
+    }
+
+    const newAmount = goal.currentAmount + parseFloat(amount)
+    const updatedGoal = await goalsService.updateSavingsGoal(userId, goalId, {
+      currentAmount: newAmount
+    })
+    res.json(updatedGoal)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to contribute to goal' })
+  }
+}
+
 export async function deleteGoal(req: Request, res: Response) {
   try {
     const userId = (req as any).userId
     const { id } = req.params
-    await goalsService.deleteSavingsGoal(userId, parseInt(id))
+    await goalsService.deleteSavingsGoal(userId, Number(id))
     res.json({ success: true })
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete goal' })
