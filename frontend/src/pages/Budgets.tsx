@@ -44,7 +44,7 @@ export default function Budgets() {
       return
     }
     try {
-      await createBudget({ categoryId: parseInt(formCategoryId), limit: parseFloat(formLimitAmount), period: 'monthly' }).unwrap()
+      await createBudget({ categoryId: parseInt(formCategoryId), limitAmount: parseFloat(formLimitAmount) }).unwrap()
       setIsModalOpen(false)
       setFormLimitAmount('')
     } catch (err: any) {

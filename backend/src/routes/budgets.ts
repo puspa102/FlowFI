@@ -7,19 +7,21 @@ const router = express.Router()
 
 router.get('/summary', getBudgetSummary)
 
-router.post('/', async (req: AuthenticatedRequest, res) => {
+router.post('/', async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const userId = req.user.id
     const { categoryId, limitAmount, month } = req.body
 
     if (!categoryId || limitAmount === undefined) {
-      return res.status(400).json({ error: 'CategoryId and limitAmount are required.' })
+      res.status(400).json({ error: 'CategoryId and limitAmount are required.' })
+      return
     }
 
     const result = await setBudgetLimit(userId, Number(categoryId), Number(limitAmount), month)
     
     if (!result.ok) {
-      return res.status(result.status ?? 400).json({ error: result.error })
+      res.status(result.status ?? 400).json({ error: result.error })
+      return
     }
 
     res.status(200).json(result.budget)
@@ -29,19 +31,21 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
   }
 })
 
-router.delete('/:id', async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     const userId = req.user.id
     const id = Number(req.params.id)
 
     if (Number.isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid budget ID.' })
+      res.status(400).json({ error: 'Invalid budget ID.' })
+      return
     }
 
     const result = await deleteBudget(userId, id)
 
     if (!result.ok) {
-      return res.status(result.status ?? 400).json({ error: result.error })
+      res.status(result.status ?? 400).json({ error: result.error })
+      return
     }
 
     res.status(200).json({ status: 'ok' })

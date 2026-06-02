@@ -7,10 +7,10 @@ export const budgetsApi = flofiApi.injectEndpoints({
       providesTags: ['Budgets'],
     }),
     createBudget: build.mutation({
-      query: (body: { categoryId: number; limit: number; period?: string }) => ({
+      query: (body: { categoryId: number; limitAmount: number; month?: string }) => ({
         url: '/api/budgets',
         method: 'POST',
-        body: { ...body, period: body.period ?? 'monthly' },
+        body,
       }),
       invalidatesTags: ['Budgets', 'Dashboard'],
     }),
