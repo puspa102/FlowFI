@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import * as dotenv from 'dotenv'
 import path from 'path'
 
@@ -16,12 +17,23 @@ import budgetsRouter from './routes/budgets'
 import investmentsRouter from './routes/investments'
 import subscriptionsRouter from './routes/subscriptions'
 import bankConnectionsRouter from './routes/bankConnections'
+import bankAccountsRouter from './routes/bankAccounts'
 import aiCoachRouter from './routes/aiCoach'
 import savingsGoalsRouter from './routes/savingsGoals'
 import familyRouter from './routes/family'
 import requireAuth from './middleware/requireAuth'
 import notFound from './middleware/notFound'
 import errorHandler from './middleware/errorHandler'
+
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'] as const
+const missingEnvVars = requiredEnvVars.filter((name) => !process.env[name])
+
+if (missingEnvVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`)
+}
+
+console.log('GOOGLE_CLIENT_ID', process.env.GOOGLE_CLIENT_ID)
+console.log('GOOGLE_CLIENT_SECRET exists', !!process.env.GOOGLE_CLIENT_SECRET)
 
 const app = express()
 const port = Number(process.env.PORT ?? 3001)
@@ -52,6 +64,9 @@ app.use(
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' })
 })
@@ -68,6 +83,7 @@ app.use('/api/budgets', requireAuth, budgetsRouter)
 app.use('/api/investments', requireAuth, investmentsRouter)
 app.use('/api/subscriptions', requireAuth, subscriptionsRouter)
 app.use('/api/bank-connections', requireAuth, bankConnectionsRouter)
+app.use('/api/bank-accounts', requireAuth, bankAccountsRouter)
 app.use('/api/ai-coach', requireAuth, aiCoachRouter)
 app.use('/api/savings-goals', requireAuth, savingsGoalsRouter)
 app.use('/api/family', requireAuth, familyRouter)

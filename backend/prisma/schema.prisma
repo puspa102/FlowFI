@@ -26,6 +26,7 @@ model User {
   notificationEmail Boolean @default(true)
   notificationPush Boolean @default(true)
   notificationSms Boolean @default(false)
+  profileImage  String?
   createdAt     DateTime @default(now())
   accounts      Account[]
   transactions  Transaction[]
@@ -39,6 +40,8 @@ model User {
   investments   Investment[]
   subscriptions Subscription[]
   bankConnections BankConnection[]
+  bankAccounts    BankAccount[]
+  accountTransfers AccountTransfer[]
   anomalyAlerts AnomalyAlert[]
   expensePredictions ExpensePrediction[]
   familyMembers FamilyMember[]
@@ -258,6 +261,23 @@ model BankConnection {
   user             User          @relation(fields: [userId], references: [id])
 }
 
+model BankAccount {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  name          String
+  institution   String?
+  type          BankAccountType
+  balance       Decimal  @db.Decimal(14, 2) @default(0)
+  currency      String   @default("NPR")
+  color         String?
+  icon          String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+  transfers     AccountTransfer[]
+}
+
 model AnomalyAlert {
   id               Int           @id @default(autoincrement())
   userId           Int
@@ -340,6 +360,27 @@ enum SyncStatus {
   SYNCED
   SYNCING
   FAILED
+}
+
+enum BankAccountType {
+  BANK
+  DIGITAL_WALLET
+  CASH
+  CREDIT_CARD
+  SAVINGS
+  INVESTMENT
+}
+
+model AccountTransfer {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  fromAccountId   Int
+  toAccountId     Int
+  amount          Decimal  @db.Decimal(14, 2)
+  description     String?
+  createdAt       DateTime @default(now())
+  fromAccount     BankAccount @relation(fields: [fromAccountId], references: [id])
+  user            User       @relation(fields: [userId], references: [id])
 }
 
 
