@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Check, Zap, Star } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const plans = [
   {
@@ -84,9 +85,12 @@ export default function PricingSection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
   const [yearly, setYearly] = useState(false)
+  const { mode } = useTheme()
+
+  const isDark = mode === 'dark'
 
   return (
-    <section className="relative bg-[#030912] py-28 overflow-hidden" id="pricing">
+    <section className="relative py-28 overflow-hidden transition-colors duration-300" style={{ background: isDark ? '#030912' : 'var(--surface-sunken)' }} id="pricing">
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
       <div className="pointer-events-none absolute top-1/3 right-0 w-96 h-96 bg-indigo-500/6 blur-3xl rounded-full" />
       <div className="pointer-events-none absolute bottom-1/4 left-0 w-80 h-80 bg-cyan-500/5 blur-3xl rounded-full" />
@@ -103,29 +107,27 @@ export default function PricingSection() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-400/70 mb-4">
             Simple pricing
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>
             Invest in your{' '}
             <span className="gradient-text-blue">financial future</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: isDark ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             Start free. Upgrade when you need more power. No hidden fees, ever.
           </p>
 
           {/* Billing toggle */}
-          <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-1.5">
+          <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border p-1.5" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'var(--border)', background: isDark ? 'rgba(255,255,255,0.03)' : 'var(--card)' }}>
             <button
               onClick={() => setYearly(false)}
-              className={`rounded-xl px-5 py-2 text-sm font-semibold transition-all duration-200 ${
-                !yearly ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
-              }`}
+              className="rounded-xl px-5 py-2 text-sm font-semibold transition-all duration-200"
+              style={!yearly ? { background: isDark ? 'rgba(255,255,255,0.1)' : 'var(--primary-light)', color: isDark ? '#FFFFFF' : 'var(--foreground)' } : { color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}
             >
               Monthly
             </button>
             <button
               onClick={() => setYearly(true)}
-              className={`flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all duration-200 ${
-                yearly ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
-              }`}
+              className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all duration-200"
+              style={yearly ? { background: isDark ? 'rgba(255,255,255,0.1)' : 'var(--primary-light)', color: isDark ? '#FFFFFF' : 'var(--foreground)' } : { color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}
             >
               Yearly
               <span className="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
@@ -149,9 +151,15 @@ export default function PricingSection() {
                 transition={{ delay: 0.15 + i * 0.1, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
                 className={`relative flex flex-col rounded-3xl border p-7 transition-all duration-300 card-hover ${
                   isPopular
-                    ? 'border-cyan-500/30 bg-gradient-to-b from-cyan-500/[0.08] to-transparent shadow-2xl shadow-cyan-500/10'
-                    : 'border-white/[0.07] bg-white/[0.025]'
+                    ? 'border-cyan-500/30 shadow-2xl shadow-cyan-500/10'
+                    : ''
                 }`}
+                style={{
+                  borderColor: isPopular ? undefined : (isDark ? 'rgba(255,255,255,0.07)' : 'var(--border)'),
+                  background: isPopular
+                    ? (isDark ? 'linear-gradient(to bottom, rgba(6,182,212,0.08), transparent)' : 'linear-gradient(to bottom, rgba(6,182,212,0.06), var(--card))')
+                    : (isDark ? 'rgba(255,255,255,0.025)' : 'var(--card)'),
+                }}
               >
                 {/* Popular badge */}
                 {plan.badge && (
@@ -167,21 +175,21 @@ export default function PricingSection() {
 
                 {/* Plan name + desc */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
-                  <p className="text-xs text-white/45 leading-relaxed">{plan.desc}</p>
+                  <h3 className="text-lg font-bold mb-1" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>{plan.name}</h3>
+                  <p className="text-xs leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>{plan.desc}</p>
                 </div>
 
                 {/* Price */}
                 <div className="mb-7">
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-extrabold text-white">
+                    <span className="text-4xl font-extrabold" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>
                       ${price}
                     </span>
                     {price > 0 && (
-                      <span className="text-sm text-white/40 mb-1.5">/ month</span>
+                      <span className="text-sm mb-1.5" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>/ month</span>
                     )}
                     {price === 0 && (
-                      <span className="text-sm text-white/40 mb-1.5">forever</span>
+                      <span className="text-sm mb-1.5" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>forever</span>
                     )}
                   </div>
                   {yearly && price > 0 && (
@@ -195,27 +203,28 @@ export default function PricingSection() {
                 <Link
                   to={plan.ctaLink}
                   className={`mb-7 block w-full rounded-2xl px-5 py-3 text-center text-sm font-bold transition-all duration-300 ${plan.ctaStyle}`}
+                  style={plan.id === 'free' && !isDark ? { border: '1px solid var(--border)', background: 'var(--surface-sunken)', color: 'var(--foreground)' } : plan.id === 'premium' && !isDark ? { border: '1px solid rgba(139,92,246,0.4)', background: 'rgba(139,92,246,0.1)', color: 'var(--foreground)' } : undefined}
                 >
                   {plan.cta}
                 </Link>
 
                 {/* Divider */}
-                <div className="h-px w-full bg-white/[0.06] mb-6" />
+                <div className="h-px w-full mb-6" style={{ background: isDark ? 'rgba(255,255,255,0.06)' : 'var(--border)' }} />
 
                 {/* Features */}
                 <div className="flex-1 space-y-3">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-start gap-2.5">
                       <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <span className="text-xs text-white/65 leading-relaxed">{f}</span>
+                      <span className="text-xs leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.65)' : 'var(--foreground)' }}>{f}</span>
                     </div>
                   ))}
                   {plan.missing.map((f) => (
                     <div key={f} className="flex items-start gap-2.5 opacity-40">
                       <div className="h-4 w-4 shrink-0 mt-0.5 flex items-center justify-center">
-                        <div className="h-0.5 w-2.5 rounded-full bg-white/30" />
+                        <div className="h-0.5 w-2.5 rounded-full" style={{ background: isDark ? 'rgba(255,255,255,0.3)' : 'var(--muted-foreground)' }} />
                       </div>
-                      <span className="text-xs text-white/40 leading-relaxed">{f}</span>
+                      <span className="text-xs leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -229,7 +238,8 @@ export default function PricingSection() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ delay: 0.7, duration: 0.5 }}
-          className="text-center text-xs text-white/30 mt-10"
+          className="text-center text-xs mt-10"
+          style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'var(--muted-foreground)' }}
         >
           All plans include a 14-day free trial. No credit card required. Cancel anytime.
         </motion.p>

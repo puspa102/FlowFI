@@ -28,6 +28,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
+  const isDark = mode === 'dark'
+
   return (
     <>
       <motion.header
@@ -36,14 +38,16 @@ export default function Navbar() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? 'bg-[#050d1f]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/30'
+            ? isDark
+              ? 'bg-[#050d1f]/90 backdrop-blur-2xl border-b border-white/[0.06] shadow-2xl shadow-black/30'
+              : 'bg-white/90 backdrop-blur-2xl border-b border-gray-200 shadow-lg'
             : 'bg-transparent'
         }`}
       >
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-4">
           {/* Logo */}
           <Link to="/">
-            <Logo size={28} textClassName="text-xl font-bold tracking-tight" textColorClass="text-white" />
+            <Logo size={28} textClassName="text-xl font-bold tracking-tight" textColorClass={isDark ? 'text-white' : 'text-gray-900'} />
           </Link>
 
           {/* Desktop nav */}
@@ -52,7 +56,7 @@ export default function Navbar() {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-white/60 hover:text-white transition-colors duration-200"
+                className={`text-sm font-medium transition-colors duration-200 ${isDark ? 'text-white/60 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 {link.label}
               </a>
@@ -66,13 +70,13 @@ export default function Navbar() {
               onClick={toggleTheme}
               title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               aria-label={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
+              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${isDark ? 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white' : 'border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'}`}
             >
               {mode === 'light' ? <Moon className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}
             </button>
             <Link
               to="/login"
-              className="text-sm font-medium text-white/70 hover:text-white transition-colors duration-200 px-4 py-2"
+              className={`text-sm font-medium transition-colors duration-200 px-4 py-2 ${isDark ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
             >
               Sign in
             </Link>
@@ -87,7 +91,7 @@ export default function Navbar() {
 
           {/* Mobile menu toggle */}
           <button
-            className="md:hidden text-white/70 hover:text-white transition-colors"
+            className={`md:hidden transition-colors ${isDark ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -104,14 +108,14 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-x-0 top-[68px] z-40 bg-[#050d1f]/95 backdrop-blur-2xl border-b border-white/[0.06] px-6 py-6 flex flex-col gap-4 md:hidden"
+            className={`fixed inset-x-0 top-[68px] z-40 backdrop-blur-2xl border-b px-6 py-6 flex flex-col gap-4 md:hidden ${isDark ? 'bg-[#050d1f]/95 border-white/[0.06]' : 'bg-white/95 border-gray-200'}`}
           >
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-base font-medium text-white/70 hover:text-white transition-colors py-2 border-b border-white/[0.06]"
+                className={`text-base font-medium transition-colors py-2 border-b ${isDark ? 'text-white/70 hover:text-white border-white/[0.06]' : 'text-gray-600 hover:text-gray-900 border-gray-100'}`}
               >
                 {link.label}
               </a>
@@ -119,7 +123,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="flex items-center justify-center gap-2 text-sm font-medium text-white/70 hover:text-white py-2.5 rounded-xl border border-white/10"
+              className={`flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl border ${isDark ? 'text-white/70 hover:text-white border-white/10' : 'text-gray-600 hover:text-gray-900 border-gray-200'}`}
             >
               {mode === 'light' ? <Moon className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}
               {mode === 'light' ? 'Dark mode' : 'Light mode'}
@@ -128,7 +132,7 @@ export default function Navbar() {
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="text-center text-sm font-medium text-white/70 hover:text-white py-2.5 rounded-xl border border-white/10"
+                className={`text-center text-sm font-medium py-2.5 rounded-xl border ${isDark ? 'text-white/70 hover:text-white border-white/10' : 'text-gray-600 hover:text-gray-900 border-gray-200'}`}
               >
                 Sign in
               </Link>

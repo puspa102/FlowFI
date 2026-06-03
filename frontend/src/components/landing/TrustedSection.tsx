@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const avatarColors = [
   'from-cyan-400 to-blue-500',
@@ -62,6 +63,8 @@ const userTypes = [
 export default function TrustedSection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
+  const { mode } = useTheme()
+  const isDark = mode === 'dark'
 
   const container = {
     hidden: {},
@@ -73,7 +76,11 @@ export default function TrustedSection() {
   }
 
   return (
-    <section className="relative bg-[#030912] py-24 overflow-hidden" id="trust">
+    <section
+      className="relative py-24 overflow-hidden transition-colors duration-300"
+      style={{ background: isDark ? '#030912' : 'var(--surface-sunken)' }}
+      id="trust"
+    >
       {/* Subtle divider glow */}
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
 
@@ -85,10 +92,10 @@ export default function TrustedSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/35 mb-4">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] mb-4" style={{ color: isDark ? 'rgba(255,255,255,0.35)' : 'var(--muted-foreground)' }}>
             Trusted by a growing community
           </p>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white">
+          <h2 className="text-3xl md:text-4xl font-extrabold" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>
             Helping people take control of{' '}
             <span className="gradient-text-cyan">their finances</span>
           </h2>
@@ -105,7 +112,11 @@ export default function TrustedSection() {
             <motion.div
               key={stat.label}
               variants={itemAnim}
-              className="group relative rounded-3xl border border-white/[0.07] bg-white/[0.025] p-7 text-center hover:border-cyan-500/25 transition-all duration-300 card-hover"
+              className="group relative rounded-3xl border p-7 text-center hover:border-cyan-500/25 transition-all duration-300 card-hover"
+              style={{
+                borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'var(--border)',
+                background: isDark ? 'rgba(255,255,255,0.025)' : 'var(--card)',
+              }}
             >
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <p className="text-3xl md:text-4xl font-extrabold gradient-text-cyan leading-none">
@@ -124,33 +135,33 @@ export default function TrustedSection() {
                   )
                 ) : '0'}
               </p>
-              <p className="text-sm font-semibold text-white mt-2">{stat.label}</p>
-              <p className="text-xs text-white/40 mt-0.5">{stat.desc}</p>
+              <p className="text-sm font-semibold mt-2" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>{stat.label}</p>
+              <p className="text-xs mt-0.5" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>{stat.desc}</p>
             </motion.div>
           ))}
         </motion.div>
 
         {/* Avatar marquee */}
         <div className="mb-10 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-white/30 mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.3)' : 'var(--muted-foreground)' }}>
             Used by people just like you
           </p>
           <div className="flex justify-center -space-x-3 mb-4">
             {initials.map((init, i) => (
               <div
                 key={init}
-                className={`h-10 w-10 rounded-full bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-xs font-bold text-white border-2 border-[#030912] shadow-lg`}
-                style={{ zIndex: initials.length - i }}
+                className={`h-10 w-10 rounded-full bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-xs font-bold text-white border-2 shadow-lg`}
+                style={{ borderColor: isDark ? '#030912' : 'var(--background)', zIndex: initials.length - i }}
               >
                 {init}
               </div>
             ))}
-            <div className="h-10 w-10 rounded-full bg-white/10 border-2 border-[#030912] flex items-center justify-center text-xs font-bold text-white/60">
+            <div className="h-10 w-10 rounded-full border-2 flex items-center justify-center text-xs font-bold" style={{ background: isDark ? 'rgba(255,255,255,0.1)' : 'var(--surface-sunken)', borderColor: isDark ? '#030912' : 'var(--background)', color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)' }}>
               +
             </div>
           </div>
-          <p className="text-sm text-white/50">
-            Join <span className="text-white font-semibold">50,000+</span> users already managing their finances smarter
+          <p className="text-sm" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}>
+            Join <span style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)', fontWeight: 600 }}>50,000+</span> users already managing their finances smarter
           </p>
         </div>
 
@@ -160,14 +171,19 @@ export default function TrustedSection() {
             {[...userTypes, ...userTypes].map((type, i) => (
               <div
                 key={`${type}-${i}`}
-                className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-5 py-2 text-sm font-medium text-white/60 whitespace-nowrap"
+                className="shrink-0 rounded-full border px-5 py-2 text-sm font-medium whitespace-nowrap"
+                style={{
+                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--border)',
+                  background: isDark ? 'rgba(255,255,255,0.04)' : 'var(--card)',
+                  color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)',
+                }}
               >
                 {type}
               </div>
             ))}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#030912] to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#030912] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-24" style={{ background: isDark ? 'linear-gradient(to right, #030912, transparent)' : 'linear-gradient(to right, var(--surface-sunken), transparent)' }} />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-24" style={{ background: isDark ? 'linear-gradient(to left, #030912, transparent)' : 'linear-gradient(to left, var(--surface-sunken), transparent)' }} />
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { X, CheckCircle2 } from 'lucide-react'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const painPoints = [
   { pain: 'Losing track of where money goes', solution: 'Automatic categorization of every transaction in real time' },
@@ -14,9 +15,15 @@ const painPoints = [
 export default function WhySection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const { mode } = useTheme()
+  const isDark = mode === 'dark'
 
   return (
-    <section className="relative bg-[#030912] py-28 overflow-hidden" id="why">
+    <section
+      className="relative py-28 overflow-hidden transition-colors duration-300"
+      style={{ background: isDark ? '#030912' : 'var(--background)' }}
+      id="why"
+    >
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
       <div className="pointer-events-none absolute top-1/2 right-1/4 w-96 h-96 bg-purple-500/6 blur-3xl rounded-full" />
 
@@ -31,12 +38,12 @@ export default function WhySection() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-purple-400/70 mb-4">
             Why Flofi
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight max-w-3xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight max-w-3xl mx-auto" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>
             Solve the real problems
             <br />
             <span className="gradient-text-blue">holding you back</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: isDark ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             Most people struggle with the same financial challenges. Flofi was built specifically to solve each one.
           </p>
         </motion.div>
@@ -60,7 +67,7 @@ export default function WhySection() {
                 className="flex items-start gap-3 rounded-2xl border border-red-500/10 bg-red-500/5 px-5 py-4"
               >
                 <X className="h-4 w-4 text-red-400/60 mt-0.5 shrink-0" />
-                <p className="text-sm text-white/60 leading-relaxed">{item.pain}</p>
+                <p className="text-sm leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)' }}>{item.pain}</p>
               </motion.div>
             ))}
           </div>
@@ -82,7 +89,7 @@ export default function WhySection() {
                 className="flex items-start gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 px-5 py-4"
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                <p className="text-sm text-white/70 leading-relaxed">{item.solution}</p>
+                <p className="text-sm leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--foreground)' }}>{item.solution}</p>
               </motion.div>
             ))}
           </div>
@@ -93,11 +100,15 @@ export default function WhySection() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.8, duration: 0.65 }}
-          className="mt-16 max-w-3xl mx-auto text-center rounded-3xl border border-white/[0.06] bg-white/[0.02] py-10 px-8"
+          className="mt-16 max-w-3xl mx-auto text-center rounded-3xl border py-10 px-8"
+          style={{
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'var(--border)',
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'var(--card)',
+          }}
         >
           <p className="text-5xl md:text-6xl font-extrabold gradient-text-emerald mb-3">$450</p>
-          <p className="text-lg font-semibold text-white mb-2">Average monthly savings discovered per user</p>
-          <p className="text-sm text-white/40">Based on AI-driven spending analysis across Flofi's user base</p>
+          <p className="text-lg font-semibold mb-2" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>Average monthly savings discovered per user</p>
+          <p className="text-sm" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>Based on AI-driven spending analysis across Flofi&apos;s user base</p>
         </motion.div>
       </div>
 

@@ -2,11 +2,14 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useAnimation } from 'framer-motion'
 import { ArrowRight, Play, TrendingUp, Wallet, ShieldCheck } from 'lucide-react'
+import { useTheme } from '@/theme/ThemeProvider'
 
 
 export default function HeroSection() {
   const controls = useAnimation()
   const ref = useRef<HTMLDivElement>(null)
+  const { mode } = useTheme()
+  const isDark = mode === 'dark'
 
   useEffect(() => {
     controls.start('visible')
@@ -24,7 +27,8 @@ export default function HeroSection() {
   return (
     <section
       ref={ref}
-      className="relative min-h-screen overflow-hidden bg-[#030912]"
+      className="relative min-h-screen overflow-hidden transition-colors duration-300"
+      style={{ background: isDark ? '#030912' : 'var(--background)' }}
       id="hero"
     >
       {/* ── FULL-VIEWPORT BACKGROUND IMAGE ── */}
@@ -33,22 +37,34 @@ export default function HeroSection() {
           src="/hero-image.png"
           alt="FloFi Dashboard Background"
           className="w-full h-full object-cover object-center"
-          style={{ display: 'block' }}
+          style={{ display: 'block', opacity: isDark ? 1 : 0.15 }}
         />
-        {/* Dark overlay so text stays readable */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#030912]/95 via-[#030912]/70 to-[#030912]/30" />
-        {/* Bottom fade to blend into the rest of the page */}
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#030912] to-transparent" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: isDark
+              ? 'linear-gradient(to right, rgba(3,9,18,0.95), rgba(3,9,18,0.70), rgba(3,9,18,0.30))'
+              : 'linear-gradient(to right, rgba(244,246,248,0.98), rgba(244,246,248,0.90), rgba(244,246,248,0.70))',
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-40"
+          style={{
+            background: isDark
+              ? 'linear-gradient(to top, #030912, transparent)'
+              : 'linear-gradient(to top, var(--background), transparent)',
+          }}
+        />
       </div>
 
       {/* Ambient gradient blobs on top of image */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/4 rounded-full bg-cyan-500/10 blur-[120px]" />
-        <div className="absolute top-1/3 right-0 w-[500px] h-[500px] translate-x-1/4 rounded-full bg-emerald-500/10 blur-[120px]" />
+        <div className={`absolute top-0 left-1/4 w-[600px] h-[600px] -translate-x-1/2 -translate-y-1/4 rounded-full blur-[120px] ${isDark ? 'bg-cyan-500/10' : 'bg-cyan-500/5'}`} />
+        <div className={`absolute top-1/3 right-0 w-[500px] h-[500px] translate-x-1/4 rounded-full blur-[120px] ${isDark ? 'bg-emerald-500/10' : 'bg-emerald-500/5'}`} />
       </div>
 
       {/* Grid pattern overlay */}
-      <div className="pointer-events-none absolute inset-0 grid-pattern opacity-20" />
+      {isDark && <div className="pointer-events-none absolute inset-0 grid-pattern opacity-20" />}
 
       {/* ── TEXT CONTENT — overlaps the image ── */}
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pt-36 pb-24 min-h-screen flex flex-col justify-center">
@@ -61,7 +77,10 @@ export default function HeroSection() {
 
           {/* Headline */}
           <motion.div variants={item} className="space-y-3">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.06] tracking-tight text-white drop-shadow-2xl">
+            <h1
+              className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.06] tracking-tight drop-shadow-2xl"
+              style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}
+            >
               Take Control of
               <br />
               Your{' '}
@@ -72,7 +91,11 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Subheadline */}
-          <motion.p variants={item} className="text-base md:text-lg text-white/70 max-w-lg leading-relaxed">
+          <motion.p
+            variants={item}
+            className="text-base md:text-lg max-w-lg leading-relaxed"
+            style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'var(--muted-foreground)' }}
+          >
             Track expenses, manage budgets, monitor accounts, and receive AI-powered financial insights — all in one intelligent platform built for modern life.
           </motion.p>
 
@@ -85,8 +108,15 @@ export default function HeroSection() {
               Get Started Free
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <button className="inline-flex items-center gap-2.5 rounded-full border border-white/20 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/15 hover:border-white/30 transition-all duration-300 backdrop-blur-sm">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+            <button
+              className="inline-flex items-center gap-2.5 rounded-full border px-6 py-3.5 text-sm font-semibold transition-all duration-300 backdrop-blur-sm"
+              style={{
+                borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'var(--border)',
+                background: isDark ? 'rgba(255,255,255,0.1)' : 'var(--card)',
+                color: isDark ? '#FFFFFF' : 'var(--foreground)',
+              }}
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: isDark ? 'rgba(255,255,255,0.2)' : 'var(--primary-light)' }}>
                 <Play className="h-3 w-3 fill-current" />
               </div>
               Watch Demo
@@ -100,7 +130,7 @@ export default function HeroSection() {
               { icon: TrendingUp, text: '50K+ Users' },
               { icon: Wallet, text: 'Free Forever Plan' },
             ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2 text-xs text-white/60">
+              <div key={text} className="flex items-center gap-2 text-xs" style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)' }}>
                 <Icon className="h-3.5 w-3.5 text-emerald-400" />
                 {text}
               </div>
@@ -121,9 +151,16 @@ export default function HeroSection() {
             { value: '98%', label: 'Satisfaction Rate' },
             { value: '4.9★', label: 'App Store Rating' },
           ].map((stat) => (
-            <div key={stat.label} className="text-center py-5 px-4 rounded-2xl border border-white/[0.08] bg-black/30 backdrop-blur-sm">
+            <div
+              key={stat.label}
+              className="text-center py-5 px-4 rounded-2xl border backdrop-blur-sm"
+              style={{
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'var(--border)',
+                background: isDark ? 'rgba(0,0,0,0.3)' : 'var(--card)',
+              }}
+            >
               <p className="text-2xl md:text-3xl font-extrabold gradient-text-cyan">{stat.value}</p>
-              <p className="text-xs text-white/45 mt-1 font-medium">{stat.label}</p>
+              <p className="text-xs mt-1 font-medium" style={{ color: isDark ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>{stat.label}</p>
             </div>
           ))}
         </motion.div>

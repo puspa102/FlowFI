@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '@/theme/ThemeProvider'
 
 function MiniGrowthChart() {
   const values = [20, 35, 28, 50, 42, 65, 58, 78, 70, 88, 82, 100]
@@ -69,9 +70,10 @@ function MiniGrowthChart() {
 export default function CTASection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const { mode } = useTheme()
 
   return (
-    <section className="relative bg-[#030912] py-28 overflow-hidden" id="cta">
+    <section className="relative py-28 overflow-hidden transition-colors duration-300" style={{ background: mode === 'dark' ? '#030912' : 'var(--background)' }} id="cta">
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
 
       {/* Background gradient blobs */}
@@ -102,7 +104,7 @@ export default function CTASection() {
                 Start building wealth today
               </div>
 
-              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-white">
+              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>
                 Start Building Better
                 <br />
                 <span className="gradient-text-cyan">Financial Habits</span>
@@ -110,7 +112,7 @@ export default function CTASection() {
                 Today
               </h2>
 
-              <p className="text-base text-white/55 leading-relaxed max-w-md">
+              <p className="text-base leading-relaxed max-w-md" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'var(--muted-foreground)' }}>
                 Join thousands of users taking control of their finances with AI-powered insights. Free to start — no credit card required.
               </p>
 
@@ -122,14 +124,20 @@ export default function CTASection() {
                   Create Free Account
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <button className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/25 transition-all duration-300 backdrop-blur-sm">
-                  <Calendar className="h-4 w-4 text-white/60" />
+                <button
+                  className="inline-flex items-center gap-2.5 rounded-full border px-6 py-3.5 text-sm font-semibold transition-all duration-300 backdrop-blur-sm"
+                  style={{
+                    borderColor: mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'var(--border)',
+                    background: mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'var(--card)',
+                    color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)',
+                  }}
+                >
+                  <Calendar className="h-4 w-4" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)' }} />
                   Book a Demo
                 </button>
               </div>
 
-              {/* Trust micro-text */}
-              <p className="text-xs text-white/30">
+              <p className="text-xs" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'var(--muted-foreground)' }}>
                 ✓ Free forever plan &nbsp;·&nbsp; ✓ No credit card &nbsp;·&nbsp; ✓ Cancel anytime
               </p>
             </div>
@@ -137,16 +145,16 @@ export default function CTASection() {
             {/* Right: Growth chart */}
             <div className="flex flex-col items-center justify-center gap-8">
               {/* Chart card */}
-              <div className="w-full max-w-xs rounded-3xl border border-white/[0.07] bg-white/[0.04] p-6 backdrop-blur-sm">
+              <div className="w-full max-w-xs rounded-3xl border p-6 backdrop-blur-sm" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.07)' : 'var(--border)', background: mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'var(--card)' }}>
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <p className="text-xs text-white/40 font-medium">Your Savings Growth</p>
-                    <p className="text-3xl font-extrabold text-white mt-0.5">$12,400</p>
+                    <p className="text-xs font-medium" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>Your Savings Growth</p>
+                    <p className="text-3xl font-extrabold mt-0.5" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>$12,400</p>
                     <p className="text-xs text-emerald-400 mt-0.5 font-medium">After 12 months with Flofi</p>
                   </div>
                 </div>
                 <MiniGrowthChart />
-                <div className="flex justify-between text-[10px] text-white/25 mt-4">
+                <div className="flex justify-between text-[10px] mt-4" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'var(--muted-foreground)' }}>
                   <span>Month 1</span>
                   <span>Month 6</span>
                   <span>Month 12</span>
@@ -161,9 +169,9 @@ export default function CTASection() {
                   { val: '14 days', label: 'Free trial period' },
                   { val: '5 min', label: 'Setup time' },
                 ].map((s) => (
-                  <div key={s.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
+                  <div key={s.label} className="rounded-2xl border p-4 text-center" style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'var(--border)', background: mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'var(--card)' }}>
                     <p className="text-lg font-extrabold gradient-text-cyan">{s.val}</p>
-                    <p className="text-[10px] text-white/35 mt-0.5">{s.label}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'var(--muted-foreground)' }}>{s.label}</p>
                   </div>
                 ))}
               </div>

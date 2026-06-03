@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { BarChart2, TrendingUp, Wallet, Brain, CheckCircle2, ArrowRight } from 'lucide-react'
 import type { JSX } from 'react'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: BarChart2 },
@@ -298,9 +299,10 @@ export default function DashboardShowcase() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
   const Panel = panelMap[activeTab]
+  const { mode } = useTheme()
 
   return (
-    <section className="relative bg-[#030912] py-28 overflow-hidden" id="dashboard">
+    <section className="relative py-28 overflow-hidden transition-colors duration-300" style={{ background: mode === 'dark' ? '#030912' : 'var(--surface-sunken)' }} id="dashboard">
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
       <div className="pointer-events-none absolute inset-0 dot-pattern opacity-20" />
 
@@ -319,11 +321,11 @@ export default function DashboardShowcase() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-500/70 mb-4">
             Product showcase
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>
             Your finances,{' '}
             <span className="gradient-text-emerald">beautifully organized</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             Experience a dashboard designed for clarity — every number, chart, and insight exactly where you need it.
           </p>
         </motion.div>
@@ -402,7 +404,7 @@ export default function DashboardShowcase() {
             { icon: CheckCircle2, text: 'Beautiful charts & visualizations' },
             { icon: CheckCircle2, text: 'AI-powered contextual insights' },
           ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-3 text-sm text-white/50">
+            <div key={text} className="flex items-center gap-3 text-sm" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}>
               <Icon className="h-4 w-4 text-emerald-400 shrink-0" />
               {text}
             </div>

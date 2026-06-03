@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Brain, Send, Sparkles } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const chatMessages = [
   { role: 'user', text: 'How can I save more money this month?' },
@@ -103,9 +104,10 @@ export default function AISection() {
   const inView = useInView(ref, { once: true, margin: '-60px' })
   const chatRef = useRef(null)
   const chatInView = useInView(chatRef, { once: true, margin: '-60px' })
+  const { mode } = useTheme()
 
   return (
-    <section className="relative bg-[#050d1f] py-28 overflow-hidden" id="ai-assistant">
+    <section className="relative py-28 overflow-hidden transition-colors duration-300" style={{ background: mode === 'dark' ? '#050d1f' : 'var(--background)' }} id="ai-assistant">
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
 
       {/* Ambient blobs */}
@@ -125,11 +127,11 @@ export default function AISection() {
             <Sparkles className="h-3.5 w-3.5" />
             AI-powered financial guidance
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>
             Your Personal{' '}
             <span className="gradient-text-cyan">Financial Assistant</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             Ask anything about your finances. Get intelligent, context-aware answers based on your actual spending data.
           </p>
         </motion.div>
@@ -189,8 +191,8 @@ export default function AISection() {
             className="space-y-5"
           >
             <div>
-              <h3 className="text-2xl font-bold text-white mb-2">What Flofi AI can do</h3>
-              <p className="text-sm text-white/45 leading-relaxed">
+              <h3 className="text-2xl font-bold mb-2" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>What Flofi AI can do</h3>
+              <p className="text-sm leading-relaxed" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
                 Powered by advanced language models trained on financial knowledge — your AI understands money like an expert CFO.
               </p>
             </div>
@@ -202,12 +204,16 @@ export default function AISection() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}
                   transition={{ delay: 0.5 + i * 0.08, duration: 0.5 }}
-                  className="group flex gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4 hover:bg-white/[0.05] hover:border-cyan-500/20 transition-all duration-300"
+                  className="group flex gap-4 rounded-2xl border p-4 transition-all duration-300 hover:border-cyan-500/20"
+                  style={{
+                    borderColor: mode === 'dark' ? 'rgba(255,255,255,0.07)' : 'var(--border)',
+                    background: mode === 'dark' ? 'rgba(255,255,255,0.025)' : 'var(--card)',
+                  }}
                 >
                   <span className="text-2xl shrink-0">{cap.icon}</span>
                   <div>
-                    <p className="text-sm font-semibold text-white mb-0.5">{cap.title}</p>
-                    <p className="text-xs text-white/45 leading-relaxed">{cap.desc}</p>
+                    <p className="text-sm font-semibold mb-0.5" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>{cap.title}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>{cap.desc}</p>
                   </div>
                 </motion.div>
               ))}

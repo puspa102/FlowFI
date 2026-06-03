@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const testimonials = [
   {
@@ -74,6 +75,8 @@ export default function TestimonialsSection() {
   const inView = useInView(ref, { once: true, margin: '-60px' })
   const [current, setCurrent] = useState(0)
   const [autoPlay, setAutoPlay] = useState(true)
+  const { mode } = useTheme()
+  const isDark = mode === 'dark'
 
   useEffect(() => {
     if (!autoPlay) return
@@ -89,7 +92,11 @@ export default function TestimonialsSection() {
   }
 
   return (
-    <section className="relative bg-[#050d1f] py-28 overflow-hidden" id="testimonials">
+    <section
+      className="relative py-28 overflow-hidden transition-colors duration-300"
+      style={{ background: isDark ? '#050d1f' : 'var(--surface-sunken)' }}
+      id="testimonials"
+    >
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent" />
       <div className="pointer-events-none absolute top-1/3 left-1/4 w-80 h-80 bg-yellow-500/5 blur-3xl rounded-full" />
 
@@ -105,11 +112,11 @@ export default function TestimonialsSection() {
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-yellow-400/70 mb-4">
             Real people, real results
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>
             Loved by{' '}
             <span className="gradient-text-cyan">50,000+ users</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: isDark ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             From students to business owners — Flofi is changing how real people relate to their money.
           </p>
         </motion.div>
@@ -128,30 +135,31 @@ export default function TestimonialsSection() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -40, scale: 0.97 }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="glass-dark rounded-3xl border border-white/[0.08] p-8 md:p-10"
+              className="rounded-3xl border p-8 md:p-10"
+              style={{
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'var(--border)',
+                background: isDark ? 'rgba(255,255,255,0.03)' : 'var(--card)',
+                boxShadow: isDark ? 'none' : 'var(--shadow-card)',
+              }}
             >
-              {/* Quote mark */}
-              <div className="text-5xl  text-cyan-500/30 font-serif leading-none mb-4">"</div>
+              <div className="text-5xl text-cyan-500/30 font-serif leading-none mb-4">&ldquo;</div>
 
-              {/* Text */}
-              <p className="text-base md:text-lg text-white/80 leading-relaxed mb-6">
+              <p className="text-base md:text-lg leading-relaxed mb-6" style={{ color: isDark ? 'rgba(255,255,255,0.8)' : 'var(--foreground)' }}>
                 {testimonials[current].text}
               </p>
 
-              {/* Highlight badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-1.5 text-xs font-semibold text-emerald-400 mb-6">
-                ✨ {testimonials[current].highlight}
+                {testimonials[current].highlight}
               </div>
 
-              {/* Author */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`h-11 w-11 rounded-full bg-gradient-to-br ${testimonials[current].avatarGrad} flex items-center justify-center text-sm font-bold text-white shadow-lg`}>
                     {testimonials[current].initials}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">{testimonials[current].name}</p>
-                    <p className="text-xs text-white/40">{testimonials[current].role}</p>
+                    <p className="text-sm font-semibold" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>{testimonials[current].name}</p>
+                    <p className="text-xs" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>{testimonials[current].role}</p>
                   </div>
                 </div>
                 <StarRating count={testimonials[current].rating} />
@@ -162,14 +170,24 @@ export default function TestimonialsSection() {
           {/* Nav buttons */}
           <button
             onClick={() => go(-1)}
-            className="absolute -left-5 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+            className="absolute -left-5 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200"
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'var(--card)',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--border)',
+              color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)',
+            }}
             aria-label="Previous"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => go(1)}
-            className="absolute -right-5 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all duration-200"
+            className="absolute -right-5 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200"
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'var(--card)',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'var(--border)',
+              color: isDark ? 'rgba(255,255,255,0.6)' : 'var(--muted-foreground)',
+            }}
             aria-label="Next"
           >
             <ChevronRight className="h-5 w-5" />
@@ -199,23 +217,24 @@ export default function TestimonialsSection() {
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.3 + i * 0.07, duration: 0.5 }}
               onClick={() => { setAutoPlay(false); setCurrent(i) }}
-              className={`text-left rounded-2xl border p-5 transition-all duration-300 ${
+              className="text-left rounded-2xl border p-5 transition-all duration-300"
+              style={
                 i === current
-                  ? 'border-cyan-500/30 bg-cyan-500/10'
-                  : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10'
-              }`}
+                  ? { borderColor: 'rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.1)' }
+                  : { borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'var(--border)', background: isDark ? 'rgba(255,255,255,0.02)' : 'var(--card)' }
+              }
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className={`h-8 w-8 rounded-full bg-gradient-to-br ${t.avatarGrad} flex items-center justify-center text-xs font-bold text-white`}>
                   {t.initials}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">{t.name}</p>
-                  <p className="text-[10px] text-white/40">{t.role}</p>
+                  <p className="text-xs font-semibold" style={{ color: isDark ? '#FFFFFF' : 'var(--foreground)' }}>{t.name}</p>
+                  <p className="text-[10px]" style={{ color: isDark ? 'rgba(255,255,255,0.4)' : 'var(--muted-foreground)' }}>{t.role}</p>
                 </div>
               </div>
               <StarRating count={t.rating} />
-              <p className="mt-2 text-xs text-white/50 line-clamp-2 leading-relaxed">{t.text}</p>
+              <p className="mt-2 text-xs line-clamp-2 leading-relaxed" style={{ color: isDark ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}>{t.text}</p>
             </motion.button>
           ))}
         </div>

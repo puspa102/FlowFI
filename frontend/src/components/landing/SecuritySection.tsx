@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { ShieldCheck, Lock, Eye, Database, Key, CheckCircle2 } from 'lucide-react'
+import { useTheme } from '@/theme/ThemeProvider'
 
 const securityFeatures = [
   {
@@ -64,9 +65,10 @@ const trustBadges = [
 export default function SecuritySection() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const { mode } = useTheme()
 
   return (
-    <section className="relative bg-[#050d1f] py-28 overflow-hidden" id="security">
+    <section className="relative py-28 overflow-hidden transition-colors duration-300" style={{ background: mode === 'dark' ? '#050d1f' : 'var(--background)' }} id="security">
       <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
       <div className="pointer-events-none absolute inset-0 grid-pattern opacity-20" />
       <div className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-emerald-500/5 blur-3xl rounded-full" />
@@ -84,11 +86,11 @@ export default function SecuritySection() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Enterprise-grade security
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>
             Your data is{' '}
             <span className="gradient-text-emerald">always protected</span>
           </h2>
-          <p className="mt-4 text-base text-white/45 max-w-xl mx-auto">
+          <p className="mt-4 text-base max-w-xl mx-auto" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.45)' : 'var(--muted-foreground)' }}>
             We built Flofi with security at its core. Every layer of our architecture is designed to keep your financial data private and safe.
           </p>
         </motion.div>
@@ -108,8 +110,8 @@ export default function SecuritySection() {
                 <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl ${feat.bg} border ${feat.border}`}>
                   <Icon className={`h-5 w-5 ${feat.color}`} />
                 </div>
-                <h3 className="text-sm font-bold text-white mb-2">{feat.title}</h3>
-                <p className="text-xs text-white/50 leading-relaxed">{feat.desc}</p>
+                <h3 className="text-sm font-bold mb-2" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>{feat.title}</h3>
+                <p className="text-xs leading-relaxed" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)' }}>{feat.desc}</p>
               </motion.div>
             )
           })}
@@ -125,7 +127,8 @@ export default function SecuritySection() {
           {trustBadges.map((badge) => (
             <div
               key={badge.label}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-white/60"
+              className="flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold"
+              style={{ borderColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'var(--border)', background: mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'var(--card)', color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : 'var(--foreground)' }}
             >
               <span className="text-base">{badge.icon}</span>
               {badge.label}
@@ -145,9 +148,9 @@ export default function SecuritySection() {
               <Lock className="h-6 w-6 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white mb-2">Our Security Promise</h3>
-              <p className="text-sm text-white/55 leading-relaxed">
-                Flofi operates on a strict <strong className="text-white">read-only</strong> basis. We analyze your data to provide insights — but we <strong className="text-white">never</strong> have the ability to move, transfer, or modify your funds. Your money is always 100% under your control.
+              <h3 className="text-lg font-bold mb-2" style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>Our Security Promise</h3>
+              <p className="text-sm leading-relaxed" style={{ color: mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'var(--muted-foreground)' }}>
+                Flofi operates on a strict <strong style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>read-only</strong> basis. We analyze your data to provide insights — but we <strong style={{ color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)' }}>never</strong> have the ability to move, transfer, or modify your funds. Your money is always 100% under your control.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {['No fund access', 'Read-only data', 'Zero data selling', 'You own your data'].map((point) => (
