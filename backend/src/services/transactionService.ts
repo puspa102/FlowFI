@@ -1,6 +1,7 @@
 import prisma from '../config/prisma'
 import { Prisma } from '../generated/prisma'
-import { toSignedAmount } from '../utils/finance'
+import { buildMonthStart, toSignedAmount } from '../utils/finance'
+import { recalculateBudgets } from './budgetService'
 
 type TransactionQuery = {
   page?: string
@@ -10,6 +11,7 @@ type TransactionQuery = {
   accountId?: string
   startDate?: string
   endDate?: string
+  timeframe?: string
   type?: string
 }
 
@@ -27,17 +29,13 @@ type TransactionInput = {
 }
 
 export async function processRecurringTransactions(userId: number) {
-  let attempts = 0
-  const maxAttempts = 100 // Prevent infinite loops
+  const now = new Date()
+  const recurringTxs = await prisma.transaction.findMany({
+    where: { userId, isRecurring: true },
+    take: 50,
+  })
 
-  while (attempts < maxAttempts) {
-    // Find a recurring transaction where the next occurrence is in the past
-    const recurringTx = await prisma.transaction.findFirst({
-      where: { userId, isRecurring: true },
-    })
-
-    if (!recurringTx) break
-
+  for (const recurringTx of recurringTxs) {
     const occurredAt = new Date(recurringTx.occurredAt)
     const nextDate = new Date(occurredAt)
 
@@ -48,36 +46,15 @@ export async function processRecurringTransactions(userId: number) {
     } else if (recurringTx.recurringInterval === 'yearly') {
       nextDate.setFullYear(nextDate.getFullYear() + 1)
     } else {
-      // Invalid interval, disable recurring
       await prisma.transaction.update({
         where: { id: recurringTx.id },
         data: { isRecurring: false },
       })
-      attempts++
       continue
     }
 
-    // If the next occurrence is in the future, we have caught up for this particular transaction series.
-    // To prevent checking the same future transaction repeatedly in our loop, we break or skip.
-    // A simple way is to query only those whose next calculated date would be <= now.
-    // Let's filter in memory or just check if nextDate is indeed in the past:
-    if (nextDate > new Date()) {
-      // Find another recurring transaction that might be overdue
-      const otherOverdue = await prisma.transaction.findFirst({
-        where: {
-          userId,
-          isRecurring: true,
-          id: { not: recurringTx.id },
-          occurredAt: { lt: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000) } // generic overdue threshold
-        }
-      })
-      if (!otherOverdue) break
+    if (nextDate > now) continue
 
-      // If we got here, there are no overdue ones we can easily identify, let's break to avoid loop
-      break
-    }
-
-    // Create the new auto-logged transaction
     await prisma.transaction.create({
       data: {
         userId: recurringTx.userId,
@@ -87,20 +64,17 @@ export async function processRecurringTransactions(userId: number) {
         category: recurringTx.category,
         amount: recurringTx.amount,
         type: recurringTx.type,
-        status: 'CLEARED', // Auto-logged recurring bills are cleared
+        status: 'CLEARED',
         occurredAt: nextDate,
         isRecurring: true,
         recurringInterval: recurringTx.recurringInterval,
       },
     })
 
-    // Mark the previous one as no longer recurring so it is not processed again
     await prisma.transaction.update({
       where: { id: recurringTx.id },
       data: { isRecurring: false },
     })
-
-    attempts++
   }
 }
 
@@ -138,6 +112,20 @@ export async function getTransactions(userId: number, query: TransactionQuery) {
     where.occurredAt = {
       gte: query.startDate ? new Date(query.startDate) : undefined,
       lte: query.endDate ? new Date(query.endDate) : undefined,
+    }
+  } else if (query.timeframe) {
+    const now = new Date()
+    const start = new Date(now)
+
+    if (query.timeframe === '30_DAYS') {
+      start.setDate(now.getDate() - 30)
+      where.occurredAt = { gte: start }
+    } else if (query.timeframe === 'QUARTER') {
+      start.setMonth(now.getMonth() - 3)
+      where.occurredAt = { gte: start }
+    } else if (query.timeframe === 'YEAR') {
+      start.setFullYear(now.getFullYear() - 1)
+      where.occurredAt = { gte: start }
     }
   }
 
@@ -230,6 +218,8 @@ export async function addTransaction(userId: number, input: TransactionInput) {
     include: { account: true },
   })
 
+  await recalculateBudgets(userId, buildMonthStart(transaction.occurredAt))
+
   return {
     ok: true,
     status: 201,
@@ -270,10 +260,14 @@ export async function updateTransaction(userId: number, transactionId: number, i
   if (input.isRecurring !== undefined) updateData.isRecurring = input.isRecurring
   if (input.recurringInterval !== undefined) updateData.recurringInterval = input.recurringInterval
 
-  let oldAccount = transaction.account
-  let newAccountId = input.accountId ? Number(input.accountId) : transaction.accountId
-  let newAmount = input.amount !== undefined ? Math.abs(Number(input.amount)) : Number(transaction.amount)
-  let newType = input.type !== undefined ? input.type : transaction.type
+  const oldAccount = transaction.account
+  const newAccountId = input.accountId ? Number(input.accountId) : transaction.accountId
+  const newAmount = input.amount !== undefined ? Math.abs(Number(input.amount)) : Number(transaction.amount)
+  const newType = input.type !== undefined ? input.type : transaction.type
+
+  if (Number.isNaN(newAccountId) || Number.isNaN(newAmount)) {
+    return { ok: false, status: 400, error: 'Valid accountId and amount are required.' }
+  }
 
   // Handle balance reversion if amount, type, or account changes
   if (
@@ -281,6 +275,14 @@ export async function updateTransaction(userId: number, transactionId: number, i
     newAmount !== Number(transaction.amount) ||
     newType !== transaction.type
   ) {
+    const targetAccount = newAccountId === oldAccount.id
+      ? oldAccount
+      : await prisma.account.findFirst({ where: { id: newAccountId, userId } })
+
+    if (!targetAccount) {
+      return { ok: false, status: 404, error: 'Target account not found.' }
+    }
+
     // Revert old transaction's impact
     const revertOldBalance = transaction.type === 'INCOME'
       ? Number(oldAccount.balance) - Number(transaction.amount)
@@ -290,15 +292,6 @@ export async function updateTransaction(userId: number, transactionId: number, i
       where: { id: oldAccount.id },
       data: { balance: revertOldBalance }
     })
-
-    // Fetch the new account if it changed, otherwise use the old one
-    const targetAccount = newAccountId === oldAccount.id
-      ? await prisma.account.findUnique({ where: { id: oldAccount.id } })
-      : await prisma.account.findFirst({ where: { id: newAccountId, userId } })
-
-    if (!targetAccount) {
-      return { ok: false, status: 404, error: 'Target account not found.' }
-    }
 
     // Apply new transaction impact
     const applyNewBalance = newType === 'INCOME'
@@ -320,6 +313,9 @@ export async function updateTransaction(userId: number, transactionId: number, i
     data: updateData,
     include: { account: true }
   })
+
+  await recalculateBudgets(userId, buildMonthStart(transaction.occurredAt))
+  await recalculateBudgets(userId, buildMonthStart(updatedTx.occurredAt))
 
   return {
     ok: true,
@@ -364,6 +360,8 @@ export async function deleteTransaction(userId: number, transactionId: number) {
   await prisma.transaction.delete({
     where: { id: transactionId }
   })
+
+  await recalculateBudgets(userId, buildMonthStart(transaction.occurredAt))
 
   return { ok: true, status: 200 }
 }

@@ -3,16 +3,82 @@ import fs from 'fs'
 import path from 'path'
 
 export async function getAccounts(userId: number) {
-  const accounts = await prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } })
+  const [legacyAccounts, bankAccounts] = await Promise.all([
+    prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'asc' } }),
+    prisma.bankAccount.findMany({ where: { userId, isActive: true }, orderBy: { updatedAt: 'desc' } }),
+  ])
 
-  return accounts.map((account) => ({
-    id: account.id,
-    name: account.name,
-    type: account.type,
-    balance: Number(account.balance),
-    currency: account.currency,
-    last4: account.last4,
-  }))
+  if (legacyAccounts.length > 0) {
+    return legacyAccounts.map((account) => ({
+      id: account.id,
+      name: account.name,
+      type: account.type,
+      balance: Number(account.balance),
+      currency: account.currency,
+      last4: account.last4,
+    }))
+  }
+
+  if (bankAccounts.length > 0) {
+    const synced = await syncBankAccountsToLegacy(userId, bankAccounts)
+    return synced
+  }
+
+  return []
+}
+
+async function syncBankAccountsToLegacy(userId: number, bankAccounts: any[]) {
+  const typeMap: Record<string, string> = {
+    BANK: 'CHECKING',
+    DIGITAL_WALLET: 'CHECKING',
+    CASH: 'CHECKING',
+    CREDIT_CARD: 'CREDIT',
+    SAVINGS: 'SAVINGS',
+    INVESTMENT: 'INVESTMENT',
+  }
+
+  const results = []
+  for (const ba of bankAccounts) {
+    const existing = await prisma.account.findFirst({
+      where: { userId, name: ba.name },
+    })
+
+    if (existing) {
+      await prisma.account.update({
+        where: { id: existing.id },
+        data: { balance: ba.balance },
+      })
+      results.push({
+        id: existing.id,
+        name: existing.name,
+        type: existing.type,
+        balance: Number(ba.balance),
+        currency: existing.currency,
+        last4: existing.last4,
+      })
+    } else {
+      const created = await prisma.account.create({
+        data: {
+          userId,
+          name: ba.name,
+          type: (typeMap[ba.type] ?? 'CHECKING') as any,
+          balance: ba.balance,
+          currency: ba.currency ?? 'USD',
+          last4: null,
+        },
+      })
+      results.push({
+        id: created.id,
+        name: created.name,
+        type: created.type,
+        balance: Number(created.balance),
+        currency: created.currency,
+        last4: created.last4,
+      })
+    }
+  }
+
+  return results
 }
 
 export async function getUserProfile(userId: number) {
