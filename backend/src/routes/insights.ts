@@ -10,6 +10,7 @@ router.get('/budget-suggestions', getBudgetSuggestionsHandler)
 router.get('/anomalies', getAnomaliesHandler)
 router.get('/spending-patterns', getSpendingPatternsHandler)
 router.get('/smart-categorize', smartCategorizeHandler)
+router.post('/smart-categorize', smartCategorizeHandler)
 
 export default router
 

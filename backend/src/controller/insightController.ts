@@ -14,14 +14,15 @@ export async function listInsights(req: AuthenticatedRequest, res: Response): Pr
 
 export async function chatWithAI(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { message } = req.body
+    const { message, history } = req.body
 
     if (!message || typeof message !== 'string' || !message.trim()) {
       res.status(400).json({ error: 'Message is required.' })
       return
     }
 
-    const response = await aiChat(req.user.id, message)
+    const safeHistory = Array.isArray(history) ? history : []
+    const response = await aiChat(req.user.id, message, safeHistory)
     res.status(200).json(response)
   } catch (error) {
     console.error(error)
@@ -41,9 +42,9 @@ export async function getAiPredictionsHandler(req: AuthenticatedRequest, res: Re
 
 export async function smartCategorizeHandler(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { description } = req.query
+    const description = typeof req.body?.description === 'string' ? req.body.description : req.query.description
     if (typeof description !== 'string') {
-      res.status(400).json({ error: 'Description query parameter is required.' })
+      res.status(400).json({ error: 'Description is required.' })
       return
     }
     const category = suggestCategory(description)

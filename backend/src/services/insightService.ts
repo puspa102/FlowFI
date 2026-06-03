@@ -188,13 +188,31 @@ export async function getAiPredictions(userId: number) {
   }
 }
 
-export async function aiChat(userId: number, message: string) {
+function formatMoney(value: number) {
+  return `$${value.toFixed(2)}`
+}
+
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
+}
+
+function findRequestedCategory(message: string, categories: string[]) {
+  const normalizedMessage = normalizeText(message)
+  return categories.find((category) => {
+    const normalizedCategory = normalizeText(category)
+    return normalizedMessage.includes(normalizedCategory) || normalizedCategory.split(/\s+/).some((word) => word.length > 3 && normalizedMessage.includes(word))
+  })
+}
+
+export async function aiChat(userId: number, message: string, history: Array<{ type: string; content: string }> = []) {
   const lowerMessage = message.toLowerCase()
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const recentWindowStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const [accounts, transactions, budgets, goals, investments, subscriptions] = await Promise.all([
+  const [legacyAccounts, bankAccounts, transactions, budgets, goals, investments, subscriptions] = await Promise.all([
     prisma.account.findMany({ where: { userId } }),
+    prisma.bankAccount.findMany({ where: { userId, isActive: true } }),
     prisma.transaction.findMany({ where: { userId }, orderBy: { occurredAt: 'desc' }, take: 100 }),
     prisma.budget.findMany({ where: { userId, month: monthStart }, include: { category: true } }),
     prisma.goal.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 5 }),
@@ -202,6 +220,7 @@ export async function aiChat(userId: number, message: string) {
     prisma.subscription.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 10 }),
   ])
 
+  const accounts = [...legacyAccounts, ...bankAccounts]
   const hasData = accounts.length || transactions.length || budgets.length || goals.length || investments.length || subscriptions.length
   if (!hasData) {
     return {
@@ -215,38 +234,108 @@ export async function aiChat(userId: number, message: string) {
   const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0)
   const income = transactions.filter((tx) => tx.type === 'INCOME').reduce((sum, tx) => sum + Number(tx.amount), 0)
   const expenses = transactions.filter((tx) => tx.type === 'EXPENSE').reduce((sum, tx) => sum + Number(tx.amount), 0)
+  const recentExpenses = transactions.filter((tx) => tx.type === 'EXPENSE' && tx.occurredAt >= recentWindowStart)
+  const recentExpenseTotal = recentExpenses.reduce((sum, tx) => sum + Number(tx.amount), 0)
   const activeSubscriptions = subscriptions.filter((subscription) => subscription.status === 'ACTIVE')
   const subscriptionSpend = activeSubscriptions.reduce((sum, subscription) => sum + Number(subscription.monthlyPrice), 0)
   const investmentValue = investments.reduce((sum, investment) => sum + Number(investment.quantity) * Number(investment.currentPrice), 0)
+  const netCashFlow = income - expenses
 
-  let response = [
-    'Here is what I can see from your real FloFi data:',
+  const categoryTotals = transactions
+    .filter((tx) => tx.type === 'EXPENSE')
+    .reduce<Record<string, number>>((totals, tx) => {
+      totals[tx.category] = (totals[tx.category] ?? 0) + Number(tx.amount)
+      return totals
+    }, {})
+  const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])
+  const requestedCategory = findRequestedCategory(message, Object.keys(categoryTotals))
+  const latestTransactions = transactions.slice(0, 5)
+
+  const summaryLines = [
     `- Accounts: ${accounts.length}`,
-    `- Total account balance: $${totalBalance.toFixed(2)}`,
-    `- Recent income: $${income.toFixed(2)}`,
-    `- Recent expenses: $${expenses.toFixed(2)}`,
-    `- Active subscriptions: ${activeSubscriptions.length} ($${subscriptionSpend.toFixed(2)}/month)`,
+    `- Total account balance: ${formatMoney(totalBalance)}`,
+    `- Recent income: ${formatMoney(income)}`,
+    `- Recent expenses: ${formatMoney(expenses)}`,
+    `- Active subscriptions: ${activeSubscriptions.length} (${formatMoney(subscriptionSpend)}/month)`,
     `- Goals tracked: ${goals.length}`,
-    `- Current investment value: $${investmentValue.toFixed(2)}`,
-  ].join('\n')
+    `- Current investment value: ${formatMoney(investmentValue)}`,
+  ]
 
-  if (lowerMessage.includes('budget') && budgets.length) {
+  let response = ''
+
+  const greetings = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'good afternoon']
+  const isGreeting = greetings.some((g) => lowerMessage.includes(g))
+  const isSummaryRequest = lowerMessage.includes('summary') || lowerMessage.includes('summarize') || lowerMessage.includes('overview') || lowerMessage.includes('how am i doing') || lowerMessage.includes('finances')
+  const isHelpRequest = lowerMessage.includes('help') || lowerMessage.includes('what can you do') || lowerMessage.includes('how do you work')
+
+  if (isGreeting && lowerMessage.length < 30) {
+    const topSpend = sortedCategories[0]
+    const highlight = topSpend
+      ? ` Your largest expense category recently is ${topSpend[0]} at ${formatMoney(topSpend[1])}.`
+      : ''
+    response = `Hello! Your current balance across all accounts is ${formatMoney(totalBalance)}.${highlight} Ask me about your budget, spending, goals, subscriptions, or investments for more detail.`
+  } else if (isHelpRequest) {
+    response = `I can help you with:\n- Spending analysis by category\n- Budget tracking and alerts\n- Savings goals progress\n- Investment portfolio overview\n- Subscription management\n- Recent transactions\n- Account balances\n\nJust ask a question like "How is my budget?" or "Show my subscriptions" and I will pull the relevant data from your FloFi account.`
+  } else if (isSummaryRequest) {
+    response = `Here is your financial overview:\n\n${summaryLines.join('\n')}\n\nNet cash flow: ${formatMoney(netCashFlow)}`
+    if (sortedCategories.length > 0) {
+      response += `\n\nTop spending categories:\n${sortedCategories.slice(0, 3).map(([cat, total]) => `- ${cat}: ${formatMoney(total)}`).join('\n')}`
+    }
+  } else if (requestedCategory) {
+    const categoryTxs = transactions.filter((tx) => tx.type === 'EXPENSE' && tx.category === requestedCategory)
+    const total = categoryTxs.reduce((sum, tx) => sum + Number(tx.amount), 0)
+    const examples = categoryTxs
+      .slice(0, 4)
+      .map((tx) => `- ${tx.description}: ${formatMoney(Number(tx.amount))} on ${tx.occurredAt.toLocaleDateString()}`)
+      .join('\n')
+    response = `For ${requestedCategory}, I found ${categoryTxs.length} expense transaction${categoryTxs.length === 1 ? '' : 's'} totaling ${formatMoney(total)}.\n\n${examples || 'No individual transactions matched this category yet.'}`
+  } else if (lowerMessage.includes('budget') && budgets.length) {
     response = budgets
       .slice(0, 5)
       .map((budget) => {
         const spent = Number(budget.spentAmount)
         const limit = Number(budget.limitAmount)
         const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0
-        return `- ${budget.category.name}: $${spent.toFixed(2)} of $${limit.toFixed(2)} used (${percent}%)`
+        return `- ${budget.category.name}: ${formatMoney(spent)} of ${formatMoney(limit)} used (${percent}%)`
       })
       .join('\n')
     response = `Here is your current budget picture:\n\n${response}`
   } else if ((lowerMessage.includes('goal') || lowerMessage.includes('save')) && goals.length) {
-    response = `Here are your active goals from FloFi:\n\n${goals.map((goal) => `- ${goal.title}: ${goal.progressPercent}% complete`).join('\n')}`
+    const goalLines = goals.map((goal) => {
+      const remaining = Math.max(0, Number(goal.targetAmount) - Number(goal.currentAmount))
+      return `- ${goal.title}: ${goal.progressPercent}% complete, ${formatMoney(remaining)} remaining`
+    }).join('\n')
+    const savingsNote = netCashFlow > 0
+      ? `Your recent net cash flow is positive at ${formatMoney(netCashFlow)}, so you have room to direct some surplus toward goals.`
+      : `Your recent net cash flow is ${formatMoney(netCashFlow)}, so first look for expense reductions before increasing goal contributions.`
+    response = `Here are your active goals from FloFi:\n\n${goalLines}\n\n${savingsNote}`
+  } else if (lowerMessage.includes('save') || lowerMessage.includes('saving') || lowerMessage.includes('cut')) {
+    const topCategory = sortedCategories[0]
+    const subscriptionTip = subscriptionSpend > 0 ? ` Active subscriptions add up to ${formatMoney(subscriptionSpend)}/month.` : ''
+    response = topCategory
+      ? `The clearest saving opportunity is ${topCategory[0]}, your largest recent expense category at ${formatMoney(topCategory[1])}.${subscriptionTip} Start by reviewing the highest transactions in that category and any recurring charges.`
+      : `I do not see enough expense history to identify a saving opportunity yet. Add a few transactions and I can rank the categories for you.`
   } else if (lowerMessage.includes('spending') || lowerMessage.includes('expense')) {
-    response = `Based on your recent transactions, income totals $${income.toFixed(2)} and expenses total $${expenses.toFixed(2)}. Net cash flow is $${(income - expenses).toFixed(2)}.`
+    const categoryLines = sortedCategories.slice(0, 5).map(([category, total]) => `- ${category}: ${formatMoney(total)}`).join('\n')
+    response = `Based on your recent transactions, income totals ${formatMoney(income)} and expenses total ${formatMoney(expenses)}. Net cash flow is ${formatMoney(netCashFlow)}.\n\nTop expense categories:\n${categoryLines || '- No expense categories yet.'}`
   } else if (lowerMessage.includes('investment') || lowerMessage.includes('portfolio')) {
-    response = `Your tracked investments currently total about $${investmentValue.toFixed(2)} across ${investments.length} holdings.`
+    const investmentLines = investments.slice(0, 5).map((investment) => `- ${investment.symbol}: ${formatMoney(Number(investment.quantity) * Number(investment.currentPrice))}`).join('\n')
+    response = `Your tracked investments currently total about ${formatMoney(investmentValue)} across ${investments.length} holdings.\n\n${investmentLines || 'No individual holdings are saved yet.'}`
+  } else if (lowerMessage.includes('subscription') || lowerMessage.includes('recurring')) {
+    const subscriptionLines = activeSubscriptions.map((subscription) => `- ${subscription.name}: ${formatMoney(Number(subscription.monthlyPrice))}/month`).join('\n')
+    response = activeSubscriptions.length
+      ? `You have ${activeSubscriptions.length} active subscription${activeSubscriptions.length === 1 ? '' : 's'} totaling ${formatMoney(subscriptionSpend)}/month:\n\n${subscriptionLines}`
+      : 'I do not see any active subscriptions saved in FloFi yet.'
+  } else if (lowerMessage.includes('account') || lowerMessage.includes('balance')) {
+    response = `Your total account balance is ${formatMoney(totalBalance)}.\n\n${accounts.map((account) => `- ${account.name}: ${formatMoney(Number(account.balance))}`).join('\n')}`
+  } else if (lowerMessage.includes('recent') || lowerMessage.includes('latest') || lowerMessage.includes('last transaction')) {
+    response = `Here are your latest saved transactions:\n\n${latestTransactions.map((tx) => `- ${tx.description}: ${formatMoney(Number(tx.amount))} ${tx.type.toLowerCase()} on ${tx.occurredAt.toLocaleDateString()}`).join('\n')}`
+  } else if (lowerMessage.includes('thank') || lowerMessage.includes('thanks') || lowerMessage.includes('great') || lowerMessage.includes('awesome')) {
+    response = `You're welcome! Let me know if there is anything else I can help with regarding your finances.`
+  } else if (lowerMessage.length < 10) {
+    response = `Could you give me a bit more detail? I can help with budgets, spending, goals, subscriptions, accounts, investments, or recent transactions.`
+  } else {
+    response = `Based on your FloFi data, here is a quick snapshot:\n\n${summaryLines.join('\n')}\n\nNet cash flow: ${formatMoney(netCashFlow)}\n\nFor more specific analysis, try asking about a category (e.g. "food spending"), your budget, goals, subscriptions, or investments.`
   }
 
   return {
