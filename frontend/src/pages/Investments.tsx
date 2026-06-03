@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import { useGetInvestmentsQuery, useGetTopAssetsQuery, useAddInvestmentMutation, useDeleteInvestmentMutation } from '@/store/api/investmentsApi'
 
 const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }
@@ -13,6 +14,8 @@ export default function Investments() {
   const [addInvestment] = useAddInvestmentMutation()
   const [deleteInvestment] = useDeleteInvestmentMutation()
   const [showForm, setShowForm] = useState(false)
+  const currency = useUserCurrency()
+  const fc = (value: number) => formatMoney(value, currency, 2)
 
   const handleAddInvestment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -70,14 +73,14 @@ export default function Investments() {
           <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-[var(--radius-lg)] p-6" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
               <div className="text-xs mb-2" style={{ color: 'var(--muted-foreground)' }}>Total Portfolio Value</div>
-              <div className="text-[26px] font-semibold tabular-nums" style={{ color: 'var(--primary)' }}>${portfolio.totalValue?.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+              <div className="text-[26px] font-semibold tabular-nums" style={{ color: 'var(--primary)' }}>{fc(portfolio.totalValue ?? 0)}</div>
               <div className="text-sm mt-2 font-medium" style={{ color: portfolio.gainLossPercent >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                {portfolio.gainLossPercent >= 0 ? '+' : ''}{Math.abs(portfolio.gainLossPercent)?.toFixed(2)}% ({portfolio.gainLoss > 0 ? '+' : ''}${portfolio.gainLoss?.toFixed(2)})
+                {portfolio.gainLossPercent >= 0 ? '+' : ''}{Math.abs(portfolio.gainLossPercent)?.toFixed(2)}% ({portfolio.gainLoss > 0 ? '+' : ''}{fc(portfolio.gainLoss ?? 0)})
               </div>
             </div>
             <div className="rounded-[var(--radius-lg)] p-6" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
               <div className="text-xs mb-2" style={{ color: 'var(--muted-foreground)' }}>Total Cost</div>
-              <div className="text-[26px] font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>${portfolio.totalCost?.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
+              <div className="text-[26px] font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{fc(portfolio.totalCost ?? 0)}</div>
               <div className="text-sm mt-2" style={{ color: 'var(--muted-foreground)' }}>{portfolio.investments?.length ?? 0} investments</div>
             </div>
           </motion.div>
@@ -94,7 +97,7 @@ export default function Investments() {
                     <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{asset.symbol}</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>${(asset.quantity * asset.currentPrice).toFixed(2)}</div>
+                    <div className="font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{fc(asset.quantity * asset.currentPrice)}</div>
                     <div className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{asset.allocation}% allocation</div>
                   </div>
                 </div>
@@ -134,11 +137,11 @@ export default function Investments() {
                 <div key={inv.id} className="flex items-center justify-between p-4 rounded-[var(--radius-md)] transition group hover:bg-[var(--background)]" style={{ border: '1px solid var(--border)' }}>
                   <div>
                     <div className="font-medium" style={{ color: 'var(--foreground)' }}>{inv.name}</div>
-                    <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{inv.quantity} @ ${inv.currentPrice?.toFixed(2)}</div>
+                    <div className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{inv.quantity} @ {fc(inv.currentPrice ?? 0)}</div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>${(inv.quantity * inv.currentPrice).toFixed(2)}</div>
+                      <div className="font-semibold tabular-nums" style={{ color: 'var(--foreground)' }}>{fc(inv.quantity * inv.currentPrice)}</div>
                     </div>
                     <button onClick={() => handleDeleteInvestment(inv.id)} className="text-sm font-medium opacity-0 group-hover:opacity-100 transition" style={{ color: 'var(--danger)' }}>Delete</button>
                   </div>

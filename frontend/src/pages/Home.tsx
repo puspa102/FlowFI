@@ -11,9 +11,11 @@ import PricingSection from '@/components/landing/PricingSection'
 import SecuritySection from '@/components/landing/SecuritySection'
 import CTASection from '@/components/landing/CTASection'
 import Footer from '@/components/landing/Footer'
+import { useTheme } from '@/theme/ThemeProvider'
 
 export default function Home() {
-  // Update document meta
+  const { mode } = useTheme()
+
   useEffect(() => {
     document.title = 'Flofi — AI-Powered Personal Finance Management'
     const meta = document.querySelector('meta[name="description"]')
@@ -26,7 +28,13 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="relative min-h-screen bg-navy-950 text-white antialiased">
+    <div
+      className="relative min-h-screen antialiased transition-colors duration-300"
+      style={{
+        background: mode === 'dark' ? 'var(--navy-950)' : 'var(--background)',
+        color: mode === 'dark' ? '#FFFFFF' : 'var(--foreground)',
+      }}
+    >
       {/* SEO: single h1 is in HeroSection */}
 
       {/* Sticky Navbar */}

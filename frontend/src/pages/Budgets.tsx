@@ -6,12 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import { useGetBudgetSummaryQuery, useCreateBudgetMutation, useDeleteBudgetMutation, useGetBudgetSuggestionsQuery } from '@/store/api/budgetsApi'
 import { useGetCategoriesQuery } from '@/store/api/transactionsApi'
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(value)
-}
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -29,6 +26,8 @@ export default function Budgets() {
   const { data: suggestions } = useGetBudgetSuggestionsQuery(undefined)
   const [createBudget] = useCreateBudgetMutation()
   const [deleteBudget] = useDeleteBudgetMutation()
+  const currency = useUserCurrency()
+  const formatCurrency = (value: number) => formatMoney(value, currency, 2)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formCategoryId, setFormCategoryId] = useState('')

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import {
   useGetBankAccountsQuery,
   useGetBankAccountsSummaryQuery,
@@ -60,13 +61,8 @@ function getTypeLabel(type: BankAccountType) {
   return ACCOUNT_TYPES.find((t) => t.value === type)?.label ?? type
 }
 
-function formatCurrency(amount: number, currency = 'NPR') {
-  return new Intl.NumberFormat('en-NP', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount)
+function formatCurrencyLocal(amount: number, cur: string) {
+  return formatMoney(amount, cur, 2)
 }
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
@@ -76,6 +72,8 @@ export default function BankAccounts() {
   const { data: accounts, isLoading } = useGetBankAccountsQuery()
   const { data: summary } = useGetBankAccountsSummaryQuery()
   const { data: transfers } = useGetTransferHistoryQuery()
+  const userCurrency = useUserCurrency()
+  const formatCurrency = (amount: number, cur?: string) => formatCurrencyLocal(amount, cur ?? userCurrency)
 
   const [createAccount] = useCreateBankAccountMutation()
   const [updateAccount] = useUpdateBankAccountMutation()

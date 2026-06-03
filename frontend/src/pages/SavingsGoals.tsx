@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import { useGetSavingsGoalsQuery, useCreateSavingsGoalMutation, useContributeToMutation, useDeleteSavingsGoalMutation } from '@/store/api/savingsGoalsApi'
 
 const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }
@@ -34,6 +35,8 @@ export default function SavingsGoals() {
   const [contributeTo] = useContributeToMutation()
   const [deleteGoal] = useDeleteSavingsGoalMutation()
   const [showForm, setShowForm] = useState(false)
+  const currency = useUserCurrency()
+  const fc = (value: number) => formatMoney(value, currency)
   const [contributeId, setContributeId] = useState<number | null>(null)
   const [contributeAmount, setContributeAmount] = useState('')
 
@@ -107,7 +110,7 @@ export default function SavingsGoals() {
           <div className="rounded-[var(--radius-lg)] p-5" style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
             <div className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Total Saving Monthly</div>
             <div className="text-[22px] font-semibold mt-2 tabular-nums" style={{ color: 'var(--primary)' }}>
-              ${goalsList.reduce((sum: number, g: any) => sum + (g.monthlyContribution ?? 0), 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              {fc(goalsList.reduce((sum: number, g: any) => sum + (g.monthlyContribution ?? 0), 0))}
             </div>
           </div>
         </motion.div>
@@ -138,11 +141,11 @@ export default function SavingsGoals() {
                   <div className="grid grid-cols-2 gap-3 text-xs mb-4">
                     <div>
                       <span style={{ color: 'var(--muted-foreground)' }}>Current</span>
-                      <p className="font-semibold mt-0.5 tabular-nums" style={{ color: 'var(--foreground)' }}>${goal.currentAmount?.toLocaleString()}</p>
+                      <p className="font-semibold mt-0.5 tabular-nums" style={{ color: 'var(--foreground)' }}>{fc(goal.currentAmount ?? 0)}</p>
                     </div>
                     <div>
                       <span style={{ color: 'var(--muted-foreground)' }}>Target</span>
-                      <p className="font-semibold mt-0.5 tabular-nums" style={{ color: 'var(--foreground)' }}>${goal.targetAmount?.toLocaleString()}</p>
+                      <p className="font-semibold mt-0.5 tabular-nums" style={{ color: 'var(--foreground)' }}>{fc(goal.targetAmount ?? 0)}</p>
                     </div>
                   </div>
 

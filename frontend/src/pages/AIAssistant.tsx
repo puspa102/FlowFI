@@ -5,6 +5,7 @@ import { AlertTriangle, ChevronRight, FileText, Send, Sparkles, TrendingUp } fro
 
 import { Badge } from '@/components/ui/badge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import { useGetAIPredictionsQuery, useChatWithAIMutation } from '@/store/api/insightsApi'
 
 type Message = {
@@ -53,13 +54,11 @@ type AiData = {
   savingRecommendations?: SavingRecommendation[]
 }
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
-}
-
 const COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#64748B']
 
 export default function AIAssistant() {
+  const currency = useUserCurrency()
+  const formatCurrency = (value: number) => formatMoney(value, currency)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -143,8 +142,8 @@ export default function AIAssistant() {
 
   return (
     <DashboardLayout>
-      <div className="flex w-full max-w-7xl flex-col gap-6 mx-auto">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex w-full max-w-7xl flex-col mx-auto h-[calc(100vh-7rem)]">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 mb-6">
           <div className="flex items-start gap-3">
             <div className="h-10 w-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--primary-light)' }}>
               <Sparkles className="w-5 h-5" style={{ color: 'var(--primary)' }} />
@@ -160,8 +159,8 @@ export default function AIAssistant() {
           </Badge>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.2fr_1fr] gap-6 items-start">
-          <div className="space-y-6 flex flex-col">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1.2fr_1fr] gap-6 min-h-0 flex-1">
+          <div className="space-y-6 flex flex-col overflow-y-auto min-h-0">
             <div className="relative overflow-hidden rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, var(--primary-light), rgba(var(--accent-rgb), 0.14))', border: '1px solid var(--border)' }}>
               <div className="relative z-10 flex flex-col gap-4">
                 <div className="flex items-center gap-3">
@@ -290,7 +289,7 @@ export default function AIAssistant() {
             </div>
           </div>
 
-          <div className="rounded-2xl flex flex-col lg:sticky lg:top-6 h-[600px] lg:h-[calc(100vh-6rem)]" style={cardStyle}>
+          <div className="rounded-2xl flex flex-col min-h-0 h-full max-h-[calc(100vh-10rem)]" style={cardStyle}>
             <div className="p-4 border-b flex items-center gap-3" style={{ borderColor: 'var(--border)' }}>
               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ background: 'var(--primary-light)' }}>
                 <Sparkles className="w-4 h-4" style={{ color: 'var(--primary)' }} />

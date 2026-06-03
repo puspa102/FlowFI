@@ -15,10 +15,7 @@ import {
 import Skeleton from '@/components/ui/Skeleton'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { useGetDashboardSummaryQuery, useGetDashboardAnalyticsQuery } from '@/store/api/dashboardApi'
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
-}
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 
 export default function Dashboard() {
   const shouldReduce = useReducedMotion()
@@ -26,6 +23,8 @@ export default function Dashboard() {
   const [cashFlowPeriod, setCashFlowPeriod] = useState<'monthly' | 'quarterly'>('monthly')
   const { data: summaryData, isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummaryQuery(undefined)
   const { data: analyticsData, isLoading: analyticsLoading } = useGetDashboardAnalyticsQuery(undefined)
+  const currency = useUserCurrency()
+  const formatCurrency = (value: number) => formatMoney(value, currency)
 
   const isLoading = summaryLoading || analyticsLoading
   const cashFlowBars = useMemo(() => {
