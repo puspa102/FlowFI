@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, Plus, Search } from 'lucide-react'
 
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import { formatMoney, useUserCurrency } from '@/lib/currency'
 import {
   useGetTransactionsQuery,
   useCreateTransactionMutation,
@@ -22,6 +23,7 @@ type TransactionItem = {
   date: string
   description: string
   category: string
+  accountId: number
   account: string
   amount: number
   status: string
@@ -57,15 +59,21 @@ const toneColors: Record<string, { bg: string; text: string }> = {
   sky: { bg: 'var(--info-light)', text: 'var(--info)' },
 }
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(value)
-}
-
 export default function Transactions() {
+  const currency = useUserCurrency()
+  const formatCurrency = (value: number) => formatMoney(value, currency, 2)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedType, setSelectedType] = useState('ALL')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [timeframe, setTimeframe] = useState('ALL')
+  const [page, setPage] = useState(1)
+  const pageSize = 25
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null)
@@ -87,10 +95,12 @@ export default function Transactions() {
   const [errorMessage, setErrorMessage] = useState('')
 
   const { data: txData, isLoading, isError, refetch } = useGetTransactionsQuery({
-    search: searchQuery || undefined,
+    search: debouncedSearch || undefined,
     type: selectedType !== 'ALL' ? selectedType : undefined,
     category: selectedCategory || undefined,
     timeframe: timeframe !== 'ALL' ? timeframe : undefined,
+    page,
+    pageSize,
   })
   const { data: catData } = useGetCategoriesQuery(undefined)
   const { data: accData } = useGetAccountsQuery(undefined)
@@ -104,19 +114,39 @@ export default function Transactions() {
   const categories: CategoryItem[] = catData?.categories ?? []
   const accounts: AccountItem[] = accData?.accounts ?? []
   const content = txData ?? { page: 1, pageSize: 25, total: 0, items: [] }
+  const totalPages = Math.max(1, Math.ceil(content.total / content.pageSize))
+  const canGoPrev = content.page > 1
+  const canGoNext = content.page < totalPages
 
-  const handleDescriptionChange = async (val: string) => {
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, selectedType, selectedCategory, timeframe])
+
+  const categorizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (categorizeTimerRef.current) clearTimeout(categorizeTimerRef.current)
+    }
+  }, [])
+
+  const handleDescriptionChange = useCallback((val: string) => {
     setFormDescription(val)
+    if (categorizeTimerRef.current) {
+      clearTimeout(categorizeTimerRef.current)
+    }
     if (val.trim().length > 3) {
-      try {
-        const result = await smartCategorize({ description: val }).unwrap()
-        if (result?.category) {
-          const matched = categories.find(c => c.label.toLowerCase() === result.category.toLowerCase() || c.value.toUpperCase() === result.category.toUpperCase().replace(/\s+/g, '_'))
-          if (matched) { setFormCategory(matched.value); setAiSuggested(true) }
-        }
-      } catch { setAiSuggested(false) }
+      categorizeTimerRef.current = setTimeout(async () => {
+        try {
+          const result = await smartCategorize({ description: val }).unwrap()
+          if (result?.category) {
+            const matched = categories.find(c => c.label.toLowerCase() === result.category.toLowerCase() || c.value.toUpperCase() === result.category.toUpperCase().replace(/\s+/g, '_'))
+            if (matched) { setFormCategory(matched.value); setAiSuggested(true) }
+          }
+        } catch { setAiSuggested(false) }
+      }, 500)
     } else { setAiSuggested(false) }
-  }
+  }, [categories, smartCategorize])
 
   const openEditModal = (tx: TransactionItem) => {
     setEditingTransaction(tx)
@@ -124,7 +154,7 @@ export default function Transactions() {
     setFormAmount(Math.abs(tx.amount).toString())
     setFormType(tx.type)
     setFormCategory(tx.category)
-    const acc = accounts.find(a => `${a.name} • ${a.last4 ?? ''}`.trim() === tx.account)
+    const acc = accounts.find(a => a.id === tx.accountId)
     setFormAccountId(acc ? acc.id.toString() : (accounts[0]?.id.toString() ?? ''))
     setFormDate(new Date(tx.date).toISOString().split('T')[0])
     setFormNotes(tx.notes ?? '')
@@ -173,6 +203,7 @@ export default function Transactions() {
         await updateTransaction({ id: editingTransaction.id, ...body }).unwrap()
       } else {
         await createTransaction(body).unwrap()
+        setPage(1)
       }
       setIsModalOpen(false)
     } catch (err: any) {
@@ -389,9 +420,9 @@ export default function Transactions() {
                           {tx.amount < 0 ? '' : '+'}{formatCurrency(tx.amount)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditModal(tx)} className="text-xs font-medium hover:underline" style={{ color: 'var(--primary)' }}>Edit</button>
-                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-xs font-medium hover:underline" style={{ color: 'var(--danger)' }}>Delete</button>
+                          <div className="flex items-center justify-center gap-3">
+                            <button onClick={() => openEditModal(tx)} className="text-xs font-medium px-2 py-1 rounded transition-colors" style={{ color: 'var(--primary)', background: 'var(--primary-light)' }}>Edit</button>
+                            <button onClick={() => handleDeleteTransaction(tx.id)} className="text-xs font-medium px-2 py-1 rounded transition-colors" style={{ color: 'var(--danger)', background: 'var(--danger-light)' }}>Delete</button>
                           </div>
                         </td>
                       </motion.tr>
@@ -404,8 +435,8 @@ export default function Transactions() {
           <div className="flex items-center justify-between px-6 py-4 text-xs" style={{ borderTop: '1px solid var(--border)', color: 'var(--muted-foreground)' }}>
             <span>Showing {showingRange.start} to {showingRange.end} of {content.total}</span>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">Prev</Button>
-              <Button variant="outline" size="sm">Next</Button>
+              <Button variant="outline" size="sm" disabled={!canGoPrev || isLoading} onClick={() => setPage((current) => Math.max(1, current - 1))}>Prev</Button>
+              <Button variant="outline" size="sm" disabled={!canGoNext || isLoading} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Next</Button>
             </div>
           </div>
         </div>
