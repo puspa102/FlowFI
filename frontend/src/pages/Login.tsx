@@ -63,7 +63,7 @@ export default function Login() {
         >
           {/* Card */}
 
-          <div className="bg-white border border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[32px] p-8 sm:p-10 w-full">
+          <div className="bg-zr border-slate-100 shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-[32px] p-8 sm:p-10 w-full">
             <Logo size={36} textClassName="text-2xl font-bold tracking-tight text-slate-900" className="mb-6 justify-center" />
             {/* Title & Subtitle */}
             <div className="text-center mb-6">
