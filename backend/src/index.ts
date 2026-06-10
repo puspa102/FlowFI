@@ -50,9 +50,10 @@ app.use(
         'http://localhost:5178',
         'http://localhost:5179',
         'http://localhost:5180',
+        'https://flow-fi-gray.vercel.app',
       ]
       
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true)
       } else {
         callback(new Error('CORS not allowed'))
