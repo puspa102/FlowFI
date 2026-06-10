@@ -1,5 +1,5 @@
 import { prisma } from '../config/prisma'
-import type { Prisma, SubscriptionStatus } from '../generated/prisma'
+import type { Prisma, SubscriptionStatus } from '@prisma/client'
 import { Decimal } from '@prisma/client/runtime/library'
 
 export async function getSubscriptions(userId: number) {

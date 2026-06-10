@@ -1,5 +1,5 @@
 import prisma from '../config/prisma'
-import { Prisma } from '../generated/prisma'
+import { Prisma } from '@prisma/client'
 import { buildMonthStart, toSignedAmount } from '../utils/finance'
 import { recalculateBudgets } from './budgetService'
 
