@@ -666,6 +666,9 @@ function TransferModal({ accounts, onClose, onSubmit }: {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  const userCurrency = useUserCurrency()
+  const formatCurrency = (amount: number, cur?: string) => formatCurrencyLocal(amount, cur ?? userCurrency)
+
   const fromAccount = accounts.find((a) => a.id === fromId)
   const toAccount = accounts.find((a) => a.id === toId)
 
